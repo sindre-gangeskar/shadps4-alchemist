@@ -1,0 +1,56 @@
+@import '../css/colors.css';
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+*,
+*::after,
+*::before {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: radial-gradient(circle at bottom center, var(--secondary-color) 0%, var(--primary-color) 100%);
+  background-size: 100% 100%;
+  color: white;
+  height: 100vh;
+  overflow: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+button {
+  outline: none;
+  border: none;
+}
+
+.btn {
+  padding: 12px;
+  background: transparent;
+  color: white;
+  border-radius: 0.3rem;
+  cursor: pointer;
+  transition: 125ms ease;
+  margin: auto;
+}
+.title {
+  margin-bottom: 50px;
+  color: black;
+  font-size: 1.5rem;
+  position: relative;
+  z-index: 0;
+  background-color: white;
+  width: 100%;
+  text-align: center;
+  z-index: 5;
+  padding: 15px;
+}
