@@ -39,11 +39,13 @@
     background-color: black;
     padding: 15px;
     border-radius: 0.5rem 0.5rem 0 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 .modal-title {
     position: relative;
-    width: 100%;
     height: 100%;
     text-align: center;
 }
@@ -83,25 +85,9 @@
     color: black;
 }
 
-.mods-list {
-    list-style: none;
-    background-color: rgb(20, 20, 20);
-    width: 100%;
-}
-
-.app-details-wrapper,
-.app-mods-wrapper {
-    width: 100%;
-    height: 100%;
-    flex: 1;
-}
-
 .app-item {
-    margin: 0px auto;
-    width: 400px;
     display: flex;
     justify-content: space-between;
-    padding: 10px;
     align-items: center;
 }
 
@@ -120,12 +106,25 @@
     color: black;
 }
 
-.play.btn {
-    font-size: 1.2rem;
+.btn.play-btn {
+    position: absolute;
+    align-items: center;
+    font-size: 1rem;
     margin: 0px auto;
-    width: 80px;
     display: flex;
     text-align: center;
-    justify-content: center;
+    justify-content: space-between;
     background: linear-gradient(to right, var(--secondary-color), var(--tertiary-primary));
+    width: 20%;
+    top: 0;
+    right: 0;
+    margin: 10px;
+   outline: 1px solid rgba(255, 255, 255, 0);
+}
+.play-btn:hover{
+   outline: 1px solid white;
+}
+
+.play-icon{
+    scale: 1.8;
 }

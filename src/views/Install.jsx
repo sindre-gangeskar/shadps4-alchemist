@@ -52,26 +52,21 @@ function Install() {
     useEffect(() => {
         if (selectedApp) {
             const modalHeader = (
-                <div className="modal-header-wrapper">
-                    <p className="modal-title">{selectedApp.title}</p>
-                </div>
+                <>
+                    <div className="modal-header-wrapper">
+                        <div className="app-item">
+                            <code>{selectedApp.path}</code>
+                            <button className="btn bold reveal-btn" onClick={() => { revealInExplorer(selectedApp.path) }}><IoIosFolderOpen /></button>
+                        </div>
+                        <code className="modal-title">{selectedApp.title}</code>
+                    </div>
+                </>
             )
 
             const modalBody = (
                 <div className="modal-body-wrapper">
-                    <div className="app-details-wrapper">
-                        <ul className="mods-list">
-                            <li className="app-item">
-                                <code><strong>Path:</strong></code>
-                                <code>{selectedApp.path}</code>
-                                <button className="btn bold reveal-btn" onClick={() => { revealInExplorer(selectedApp.path) }}><IoIosFolderOpen /></button>
-                            </li>
-                            <li className="app-item">
-                            </li>
-                        </ul>
-                    </div>
                     <div className="app-mods-wrapper">
-                        <button className="btn bold play btn" onClick={() => { bootGame() }}><IoMdPlay /></button>
+                        <button className="btn bold play-btn" onClick={() => { bootGame() }}>Play<IoMdPlay className="play-icon" /></button>
                     </div>
                 </div>
             )
@@ -94,7 +89,6 @@ function Install() {
             })
         }
     }, [ selectedApp ])
-
 
     /* Refresh Games */
     useEffect(() => {

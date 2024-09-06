@@ -3,7 +3,7 @@ import isDev from 'electron-is-dev';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
-import { execFile } from 'child_process';
+import { spawn } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -158,13 +158,30 @@ ipcMain.on('open-in-explorer', async (event, path) => {
     }
 })
 ipcMain.on('launch-game', async (event, bin) => {
-    const config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'config.json')));
-    const shadPS4Exe = config.shadPS4Exe;
+    try {
+        const config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'config.json')));
+        const shadPS4Exe = config.shadPS4Exe;
+        const shadPS4Dir = path.dirname(shadPS4Exe);
 
-    execFile(shadPS4Exe, [ bin ], (err, stdout, stderr) => {
-        if (err)
-            console.error('Could not launch application', err);
-    })
+        const shadPS4Process = spawn(shadPS4Exe, [ bin ], {
+            cwd: shadPS4Dir,
+            stdio: 'ignore',
+            detached: true
+        })
+
+        shadPS4Process.on('error', err => {
+            console.error('Failed to launch application', err);
+        })
+
+        shadPS4Process.on('exit', code => {
+            console.error('ShadPS4 exited with code: ', code);
+        })
+
+        shadPS4Process.unref();
+    } catch (error) {
+        console.error('An error occurred while trying to launch game', error);
+    }
+
 })
 ipcMain.handle('get-json-data', async () => {
     const exists = fs.existsSync(dataFilePath + '/config.json');
