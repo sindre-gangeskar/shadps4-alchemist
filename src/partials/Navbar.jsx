@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import '../css/Navbar.css';
 
 function Navbar() {
-    const routes = [ { path: '/', name: 'home' }, { path: '/install', name: 'install' }, { path: '/create', name: 'create' } ];
+    const routes = [ { path: '/options', name: 'options' }, { path: '/install', name: 'install' }, { path: '/create', name: 'create' } ];
     return (
         <>
             <div className="navbar-wrapper">

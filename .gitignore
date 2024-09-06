@@ -15,6 +15,7 @@ README.md
 
 data/
 
+user/
 # misc
 .DS_Store
 .env.local

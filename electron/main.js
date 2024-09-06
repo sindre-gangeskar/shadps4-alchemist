@@ -1,8 +1,9 @@
-import { app, BrowserWindow, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import isDev from 'electron-is-dev';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { execFile } from 'child_process';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -94,32 +95,85 @@ app.on('activate', () => {
 })
 
 /* IPC Handling */
-ipcMain.on('open-file-dialog', async () => {
+ipcMain.on('open-file-dialog', async (event) => {
+    const exists = fs.existsSync(`${dataFilePath}/config.json`)
+
+    if (!exists)
+        fs.writeFileSync(`${dataFilePath}/config.json`, '');
+
     const result = await dialog.showOpenDialog({
+        title: 'Select ShadPS4 Games Library',
         properties: [ 'openDirectory' ]
     });
-    fs.writeFileSync(`${dataFilePath}/config.json`, JSON.stringify({ games_path: result.filePaths[ 0 ] }, null, 2))
-    const gamesDirectory = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`)).games_path;
-    const gamesInLibrary = fs.readdirSync(gamesDirectory, 'utf-8');
-    const gamesAvailable = gamesInLibrary.filter(x => x.startsWith('CUSA'));
-    gamesAvailable.forEach(directory => {
-        const sfo = fs.readFileSync(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo'));
-        const icon = path.join(gamesDirectory, directory, 'sce_sys', 'icon0.png').replace(/\\/g, '/');
-        if (sfo) {
-            const game = parseSFO(sfo);
-            games.push({ title: game.title, appVersion: game.appVer, id: game.id, icon: icon });
+
+    if (!result.canceled) {
+
+        const exeResult = await dialog.showOpenDialog({
+            properties: [ 'openFile' ],
+            title: 'Locate shadPS4 executable',
+            defaultPath: 'shadPS4.exe',
+            filters: [ { name: 'shadPS4.exe', extensions: [ 'exe' ] } ]
+        })
+
+        const selectedFile = exeResult.filePaths[ 0 ].replace(/\\/g, '/');
+
+        if (!exeResult.canceled) {
+            if (path.basename(selectedFile) !== 'shadPS4.exe') {
+                console.error('Executable selected is not shadPS4.exe');
+                return;
+            }
         }
 
-    })
+        const config = {
+            games_path: result.filePaths[ 0 ].replace(/\\/g, '/'),
+            shadPS4Exe: selectedFile,
+        }
 
-    saveConfig(games);
-    games = [];
+        const gamesDirectory = config.games_path;
+        const gamesAvailable = fs.readdirSync(gamesDirectory).filter(x => x.startsWith('CUSA'));
+
+        gamesAvailable.forEach(directory => {
+            const sfoExists = fs.existsSync(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo'));
+
+            if (sfoExists) {
+                const sfo = fs.readFileSync(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo'));
+                const icon = path.join(gamesDirectory, directory, 'sce_sys', 'icon0.png').replace(/\\/g, '/');
+                if (sfoExists) {
+                    const game = parseSFO(sfo);
+                    games.push({ title: game.title, appVersion: game.appVer, id: game.id, icon: icon, path: `${gamesDirectory}/${directory}` });
+                }
+            }
+        })
+
+        fs.writeFileSync(`${dataFilePath}/config.json`, JSON.stringify(config, null, 2));
+        saveConfig(games);
+        event.sender.send('games-updated', { games: games, shadPS4Exe: config.selectedFile });
+        games = [];
+    }
+})
+ipcMain.on('open-in-explorer', async (event, path) => {
+    if (path) {
+        shell.openPath(path);
+        console.log(path);
+    }
+})
+ipcMain.on('launch-game', async (event, bin) => {
+    const config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'config.json')));
+    const shadPS4Exe = config.shadPS4Exe;
+
+    execFile(shadPS4Exe, [ bin ], (err, stdout, stderr) => {
+        if (err)
+            console.error('Could not launch application', err);
+    })
 })
 ipcMain.handle('get-json-data', async () => {
     const exists = fs.existsSync(dataFilePath + '/config.json');
     if (exists) {
-        const data = JSON.parse(fs.readFileSync(dataFilePath + '/config.json'));
-        return data;
+        const config = `${dataFilePath}/config.json`;
+        const data = JSON.parse(fs.readFileSync(config))
+        if (data.games) {
+            return data;
+        }
     }
     else return false;
 })

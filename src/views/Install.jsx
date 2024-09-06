@@ -2,46 +2,121 @@ import React from "react";
 import { useEffect, useState } from "react";
 import '../css/Install.css';
 
-import GameCard from "../partials/GameCard";
+import { IoIosFolderOpen, IoMdPlay } from "react-icons/io";
+import GamesWrapper from "../partials/GamesWrapper";
+import Modal from '../partials/Modal';
 
 function Install() {
-    const [ games, setGames ] = useState(null);
+    const [ games, setGames ] = useState([]);
+    const [ updated, setUpdated ] = useState(false);
+    const [ modalContent, setModalContent ] = useState(null);
+    const [ modalOpen, setModalOpen ] = useState(false);
+    const [ selectedApp, setSelectedApp ] = useState(false);
 
-    const testSignal = () => {
+    const initializeLibrary = () => {
         window.electron.send('open-file-dialog');
     }
 
+    const bootGame = () => {
+        window.electron.send('launch-game', `${selectedApp.path}/eboot.bin`);
+    }
+
+    const revealInExplorer = (path) => {
+        window.electron.send('open-in-explorer', path);
+    }
+
+    const handleSelectedApp = (app) => {
+        setSelectedApp(app);
+        setModalOpen(true);
+    }
+
+    const closeModal = () => {
+        setModalOpen(false);
+    }
+
+    /* Library */
     useEffect(() => {
         const getJsonData = async () => {
             const data = await window.electron.getJsonData();
-            setGames(data.games);
+            if (data && data.games) {
+                setGames(data.games);
+                setUpdated(true);
+            }
+        };
+        if (!updated) {
+            getJsonData();
         }
+    }, [ updated ]);
 
-        getJsonData();
-    }, [])
+    /* Modal */
+    useEffect(() => {
+        if (selectedApp) {
+            const modalHeader = (
+                <div className="modal-header-wrapper">
+                    <p className="modal-title">{selectedApp.title}</p>
+                </div>
+            )
 
+            const modalBody = (
+                <div className="modal-body-wrapper">
+                    <div className="app-details-wrapper">
+                        <ul className="mods-list">
+                            <li className="app-item">
+                                <code><strong>Path:</strong></code>
+                                <code>{selectedApp.path}</code>
+                                <button className="btn bold reveal-btn" onClick={() => { revealInExplorer(selectedApp.path) }}><IoIosFolderOpen /></button>
+                            </li>
+                            <li className="app-item">
+                            </li>
+                        </ul>
+                    </div>
+                    <div className="app-mods-wrapper">
+                        <button className="btn bold play btn" onClick={() => { bootGame() }}><IoMdPlay /></button>
+                    </div>
+                </div>
+            )
+
+            const modalFooter = (
+                <div className="modal-footer-wrapper">
+                    <button className="btn modal-close" onClick={closeModal}>OK</button>
+                </div>
+            )
+
+            const modalBackdrop = (
+                <div className="modal-backdrop" onClick={closeModal}></div>
+            )
+
+            setModalContent({
+                header: modalHeader,
+                body: modalBody,
+                footer: modalFooter,
+                backdrop: modalBackdrop
+            })
+        }
+    }, [ selectedApp ])
+
+
+    /* Refresh Games */
+    useEffect(() => {
+        const handleGamesUpdated = (event, data) => {
+            setGames(data.games);
+            setUpdated(true);
+        };
+
+        window.electron.on('games-updated', handleGamesUpdated);
+        return () => { window.electron.removeEventListener('games-updated', handleGamesUpdated); };
+    }, []);
 
     return (
         <>
-            <p className="title">Install Mod</p>
-
-            {!games ?
+            <Modal content={modalContent} show={modalOpen} />
+            {!games || games?.length === 0 ?
                 <div className="dialog-wrapper">
                     <p className="message">No games library found</p>
-                    <button className="btn initialize" onClick={testSignal}>Select Games Directory</button>
+                    <button className="btn initialize" onClick={initializeLibrary}>Select Games Directory</button>
                 </div>
-                : <div className="library-wrapper">
-                    {games.map(game => {
-                        return (
-                            <GameCard title={game.title} icon={game.icon}></GameCard>
-                        )
-                    })}
-                </div>
-
+                : <GamesWrapper content={games} select={handleSelectedApp} />
             }
-
-
-
         </>
     )
 }

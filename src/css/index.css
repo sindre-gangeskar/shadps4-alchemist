@@ -16,7 +16,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: radial-gradient(circle at bottom center, var(--secondary-color) 0%, var(--primary-color) 100%);
+    background: radial-gradient(circle at bottom center, var(--secondary-color) 0%, var(--primary-color) 100%);
+/*   background-color: rgb(0, 0, 0); */
   background-size: 100% 100%;
   color: white;
   height: 100vh;
@@ -40,8 +41,8 @@ button {
   border-radius: 0.3rem;
   cursor: pointer;
   transition: 125ms ease;
-  margin: auto;
 }
+
 .title {
   margin-bottom: 50px;
   color: black;
