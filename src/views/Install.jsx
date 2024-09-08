@@ -1,21 +1,74 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import '../css/Install.css';
-
-import { IoIosFolderOpen, IoMdPlay } from "react-icons/io";
+import useGlobalStateStore from "../js/globalStateStore";
+import { IoIosFolderOpen } from "react-icons/io";
 import GamesWrapper from "../partials/GamesWrapper";
 import Modal from '../partials/Modal';
 
 function Install() {
+    const [ setLibraryDirectory ] = useGlobalStateStore(state => [ state.setLibraryDirectory ]);
+    const [ setShadPS4Location ] = useGlobalStateStore(state => [ state.setShadPS4Location ]);
+    const [ setModsDirectory ] = useGlobalStateStore(state => [ state.setModsDirectory ]);
     const [ games, setGames ] = useState([]);
     const [ updated, setUpdated ] = useState(false);
     const [ modalContent, setModalContent ] = useState(null);
     const [ modalOpen, setModalOpen ] = useState(false);
     const [ selectedApp, setSelectedApp ] = useState(false);
+    const [ setError ] = useGlobalStateStore(state => [ state.setError ]);
+    const [ setToolTipVisible ] = useGlobalStateStore(state => [ state.setToolTipVisible ]);
+    const [ modsForCurrentApp, setModsForCurrentApp ] = useState(null);
+
 
     const initializeLibrary = () => {
         window.electron.send('open-file-dialog');
     }
+
+    const hideTooltip = async () => {
+        setToolTipVisible(false);
+    }
+
+    useEffect(() => {
+        window.electron.on('error', (event, err) => {
+            if (err) {
+                const header = <div className="tooltip-header">
+                    <p className="tooltip-title">{err.name}</p>
+                </div>
+
+                const body = <div className="tooltip-body">
+                    <p>{err.message}</p>
+                </div>
+
+                const footer = <div className="tooltip-footer">
+                    <button className="btn tooltip-btn" onClick={hideTooltip}>OK</button>
+                </div>
+                const obj = ({ header: header, body: body, footer: footer })
+                setError(obj);
+            }
+
+            return () => {
+                window.electron.removeAllListeners('error');
+            }
+        })
+    }, [])
+
+    useEffect(() => {
+        if (selectedApp && selectedApp.id) {
+            window.electron.send(`get-mods`, selectedApp.id)
+
+            const modsListener = (event, data) => {
+                window.electron.removeListener(`mods-${selectedApp.id}`, modsListener);
+                if (data && data.mods)
+                    setModsForCurrentApp(data.mods);
+            }
+
+            window.electron.on(`mods-${selectedApp.id}`, modsListener)
+            return () => {
+                window.electron.removeListener(`mods-${selectedApp.id}`, modsListener);
+            }
+        }
+
+    }, [ selectedApp ])
 
     const bootGame = () => {
         window.electron.send('launch-game', `${selectedApp.path}/eboot.bin`);
@@ -34,12 +87,21 @@ function Install() {
         setModalOpen(false);
     }
 
+    const requestModsForApp = (app) => {
+        if (app && app.id) {
+            window.electron.send('check-mods', app.id);
+        }
+    }
+
     /* Library */
     useEffect(() => {
         const getJsonData = async () => {
             const data = await window.electron.getJsonData();
             if (data && data.games) {
                 setGames(data.games);
+                setLibraryDirectory(data.games_path);
+                setShadPS4Location(data.shadPS4Exe);
+                setModsDirectory(data.mods_path);
                 setUpdated(true);
             }
         };
@@ -66,7 +128,14 @@ function Install() {
             const modalBody = (
                 <div className="modal-body-wrapper">
                     <div className="app-mods-wrapper">
-                        <button className="btn bold play-btn" onClick={() => { bootGame() }}>Play<IoMdPlay className="play-icon" /></button>
+                        <button className="btn bold play-btn" onClick={() => { bootGame() }}>Launch {selectedApp.title}</button>
+                        <ul className="mods-list">
+                            {Array.isArray(modsForCurrentApp) && modsForCurrentApp.length > 0 ? modsForCurrentApp.map(mod => {
+                                return (
+                                    <li className="mod-item">{mod}</li>
+                                )
+                            }) : null}
+                        </ul>
                     </div>
                 </div>
             )
@@ -87,8 +156,10 @@ function Install() {
                 footer: modalFooter,
                 backdrop: modalBackdrop
             })
+
+            requestModsForApp(selectedApp);
         }
-    }, [ selectedApp ])
+    }, [ selectedApp, modsForCurrentApp ])
 
     /* Refresh Games */
     useEffect(() => {
@@ -98,7 +169,7 @@ function Install() {
         };
 
         window.electron.on('games-updated', handleGamesUpdated);
-        return () => { window.electron.removeEventListener('games-updated', handleGamesUpdated); };
+        return () => { window.electron.removeListener('games-updated', handleGamesUpdated); };
     }, []);
 
     return (

@@ -42,6 +42,7 @@ function parseSFO(buffer) {
     let title;
     let id;
     let appVer;
+
     // Read the SFO header
     const magic = buffer.slice(0, 4).toString('ascii');
     if (magic !== "\0PSF")
@@ -67,7 +68,6 @@ function parseSFO(buffer) {
             title = buffer.toString('utf-8', dataTableStart + dataOffset, dataTableStart + dataOffset + dataLength - 1);
         }
         if (key === 'APP_VER') {
-            console.log('Found Target app ver!');
             appVer = buffer.toString('utf-8', dataTableStart + dataOffset, dataTableStart + dataOffset + dataLength - 1);
         }
         if (key === 'TITLE_ID') {
@@ -99,15 +99,16 @@ ipcMain.on('open-file-dialog', async (event) => {
     const exists = fs.existsSync(`${dataFilePath}/config.json`)
 
     if (!exists)
-        fs.writeFileSync(`${dataFilePath}/config.json`, '');
+        fs.writeFileSync(`${dataFilePath}/config.json`, JSON.stringify({}, null, 2));
 
-    const result = await dialog.showOpenDialog({
+    const setGamesLibrary = await dialog.showOpenDialog({
         title: 'Select ShadPS4 Games Library',
         properties: [ 'openDirectory' ]
     });
 
-    if (!result.canceled) {
+    if (!setGamesLibrary.canceled) { // If user doesn't cancel the dialog
 
+        // Set the shadPS4.exe file. 
         const exeResult = await dialog.showOpenDialog({
             properties: [ 'openFile' ],
             title: 'Locate shadPS4 executable',
@@ -115,7 +116,7 @@ ipcMain.on('open-file-dialog', async (event) => {
             filters: [ { name: 'shadPS4.exe', extensions: [ 'exe' ] } ]
         })
 
-        const selectedFile = exeResult.filePaths[ 0 ].replace(/\\/g, '/');
+        const selectedFile = exeResult.filePaths[ 0 ];
 
         if (!exeResult.canceled) {
             if (path.basename(selectedFile) !== 'shadPS4.exe') {
@@ -124,31 +125,67 @@ ipcMain.on('open-file-dialog', async (event) => {
             }
         }
 
+        const setModsDirectory = await dialog.showOpenDialog({
+            properties: [ 'openDirectory' ],
+            title: 'Set Mods Directory',
+        })
+
+        if (setModsDirectory.canceled) {
+            return;
+        }
+
         const config = {
-            games_path: result.filePaths[ 0 ].replace(/\\/g, '/'),
+            games_path: setGamesLibrary.filePaths[ 0 ],
+            mods_path: setModsDirectory.filePaths[ 0 ],
             shadPS4Exe: selectedFile,
         }
 
         const gamesDirectory = config.games_path;
-        const gamesAvailable = fs.readdirSync(gamesDirectory).filter(x => x.startsWith('CUSA'));
+        const gamesAvailable = fs.readdirSync(gamesDirectory).filter(x => x.startsWith('CUSA')); // Make sure all directories start with CUSA
 
         gamesAvailable.forEach(directory => {
             const sfoExists = fs.existsSync(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo'));
-
-            if (sfoExists) {
-                const sfo = fs.readFileSync(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo'));
-                const icon = path.join(gamesDirectory, directory, 'sce_sys', 'icon0.png').replace(/\\/g, '/');
+            const binExists = fs.existsSync(path.join(gamesDirectory, directory, 'eboot.bin'));
+            if (sfoExists && binExists) { // Game must have a .sfo and eboot.bin file in order to be seen as a game available to play and be added to the library
+                const sfo = fs.readFileSync(path.normalize(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo')));
+                const icon = path.normalize(path.join(gamesDirectory, directory, 'sce_sys', 'icon0.png'));
                 if (sfoExists) {
                     const game = parseSFO(sfo);
-                    games.push({ title: game.title, appVersion: game.appVer, id: game.id, icon: icon, path: `${gamesDirectory}/${directory}` });
+                    if (!games.some(x => x.id === game.id)) { // Add game only if the games list doesn't already have an identical game based on the ID provided
+                        games.push({ title: game.title, appVersion: game.appVer, id: game.id, icon: icon, path: `${gamesDirectory}/${directory}` });
+                    }
                 }
             }
         })
 
-        fs.writeFileSync(`${dataFilePath}/config.json`, JSON.stringify(config, null, 2));
-        saveConfig(games);
-        event.sender.send('games-updated', { games: games, shadPS4Exe: config.selectedFile });
-        games = [];
+        const checkSameDrive = (arr) => {
+            for (let i = 0; i < arr.length; i++) {
+                console.log(path.parse(arr[ i ]).root);
+                if (path.normalize(path.parse(arr[ i ]).root) !== path.normalize(path.parse(arr[ 0 ]).root)) {
+                    event.sender.send('error', { message: 'Error: All directories must be on the same drive' })
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Save and send data to rendering client
+        const paths = [ config.games_path, config.mods_path, config.shadPS4Exe ];
+        if (checkSameDrive(paths)) {
+            fs.writeFileSync(`${dataFilePath}/config.json`, JSON.stringify(config, null, 2));
+            saveConfig(games);
+            event.sender.send('games-updated', { games: games, shadPS4Exe: config.selectedFile });
+        }
+
+        else {
+            const error = {
+                message: 'All directories must be on the same drive',
+                name: 'InvalidDrivesError',
+                code: 400
+            };
+            console.error(error.message);
+            event.sender.send('error', error);
+        }
     }
 })
 ipcMain.on('open-in-explorer', async (event, path) => {
@@ -182,6 +219,20 @@ ipcMain.on('launch-game', async (event, bin) => {
         console.error('An error occurred while trying to launch game', error);
     }
 
+})
+ipcMain.on(`get-mods`, async (event, id) => {
+    const configFile = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
+    const modsPath = configFile.mods_path;
+    const idExists = fs.existsSync(`${modsPath}/${id}`);
+
+    if (idExists) {
+        const directory = fs.readdirSync(`${modsPath}/${id}`, { withFileTypes: true }).filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
+        console.log(directory);
+        event.sender.send(`mods-${id}`, { mods: directory.length > 0 ? directory : `No mods found for ${id}` });
+    }
+    else {
+        event.sender.send(`mods-${id}`, { mods: `No mods found for ${id}` });
+    }
 })
 ipcMain.handle('get-json-data', async () => {
     const exists = fs.existsSync(dataFilePath + '/config.json');

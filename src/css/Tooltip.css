@@ -1,0 +1,45 @@
+.tooltip-wrapper {
+    width: 800px;
+    background-color: #212121;
+    color: white;
+    font-size: 0.75rem;
+    width: fit-content;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 25px auto;
+    padding: 15px;
+    opacity: 0;
+    transition: 500ms ease;
+}
+
+.tooltip-header {
+    font-weight: bolder;
+    flex: 1;
+}
+
+.tooltip-body {
+    flex: 1;
+    padding: 15px;
+}
+
+.tooltip-footer {
+    flex: 1;
+    margin: auto;
+}
+
+.tooltip-btn {
+    margin: 5px auto;
+    background-color: black;
+    transition: 250ms ease;
+    width: 80px;
+    padding: 5px;
+}
+
+.tooltip-btn:hover{
+    background-color: white;
+    color: black;
+}

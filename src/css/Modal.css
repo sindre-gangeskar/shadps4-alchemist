@@ -1,11 +1,3 @@
-.show {
-    opacity: 1;
-}
-
-.hide {
-    opacity: 0;
-}
-
 .modal-backdrop {
     left: 50%;
     top: 50%;
@@ -25,10 +17,10 @@
     top: 50%;
     transform: translate(-50%, -50%);
     color: white;
-    width: 100%;
-    height: 100%;
-    max-width: 800px;
-    max-height: 600px;
+    width: 100vw;
+    height: 100vh;
+    max-width: 1200px;
+    max-height: 800px;
     min-width: 400px;
     min-height: 300px;
     z-index: 1;
@@ -108,23 +100,29 @@
 
 .btn.play-btn {
     position: absolute;
-    align-items: center;
-    font-size: 1rem;
-    margin: 0px auto;
-    display: flex;
-    text-align: center;
-    justify-content: space-between;
-    background: linear-gradient(to right, var(--secondary-color), var(--tertiary-primary));
-    width: 20%;
     top: 0;
     right: 0;
+    font-size: 0.75rem;
+    background: linear-gradient(to right, var(--secondary-color), var(--tertiary-primary));
+    width: 100%;
+    max-width: 250px;
+    overflow: hidden;
+    text-wrap: nowrap;
+    text-overflow: ellipsis;
+    outline: 1px solid rgba(255, 255, 255, 0);
     margin: 10px;
-   outline: 1px solid rgba(255, 255, 255, 0);
-}
-.play-btn:hover{
-   outline: 1px solid white;
 }
 
-.play-icon{
-    scale: 1.8;
+.play-btn:hover {
+    outline: 1px solid white;
+}
+
+.mods-list{
+    width: 40%;
+    background-color: var(--secondary-color);
+    list-style: none;
+    margin: 15px;
+}
+.mod-item{
+    padding: 15px;
 }

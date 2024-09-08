@@ -1,20 +1,28 @@
-.about-wrapper {
+.options-wrapper {
     position: relative;
-    margin: 10px auto;
-    text-align: center;
-    color: rgb(255, 255, 255);
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
     padding: 20px;
+    height: 100vh;
+    width: 100%;
+    max-width: 800px;
+    overflow-y: auto;
     gap: 25px;
+    margin: auto;
 }
 
-.about-wrapper>p {
-    max-width: 500px;
-    flex: 1;
+.option{
+    display: flex;
+    justify-content: space-between;
+}
+
+.path{
     text-align: start;
+    min-width: 250px;
+}
+.name{
+    text-align: end;
+    min-width: 250px;
 }
 
 .bold {

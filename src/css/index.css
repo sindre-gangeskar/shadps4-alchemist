@@ -55,3 +55,12 @@ button {
   z-index: 5;
   padding: 15px;
 }
+
+.show {
+  opacity: 1;
+}
+
+.hide {
+  opacity: 0;
+  pointer-events: none;
+}

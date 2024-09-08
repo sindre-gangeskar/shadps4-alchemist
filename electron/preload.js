@@ -7,7 +7,7 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.on(channel, (...args) => func(...args))
     },
     on: (channel, callback) => ipcRenderer.on(channel, callback),
-    removeEventListener: (channel, callback) => ipcRenderer.removeListener(channel, callback),
+    removeListener: (channel, callback) => ipcRenderer.removeListener(channel, callback),
     getJsonData: async () => await ipcRenderer.invoke('get-json-data'),
     minimizeWindow: () => { ipcRenderer.invoke('minimize-window') },
     maximizeWindow: () => { ipcRenderer.invoke('maximize-window') },
