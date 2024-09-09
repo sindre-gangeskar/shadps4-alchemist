@@ -5,11 +5,12 @@ import useGlobalStateStore from "../js/globalStateStore";
 import { IoIosFolderOpen } from "react-icons/io";
 import GamesWrapper from "../partials/GamesWrapper";
 import Modal from '../partials/Modal';
-
+import ToggleButton from '../partials/ToggleButton';
 function Install() {
     const [ setLibraryDirectory ] = useGlobalStateStore(state => [ state.setLibraryDirectory ]);
     const [ setShadPS4Location ] = useGlobalStateStore(state => [ state.setShadPS4Location ]);
     const [ setModsDirectory ] = useGlobalStateStore(state => [ state.setModsDirectory ]);
+
     const [ games, setGames ] = useState([]);
     const [ updated, setUpdated ] = useState(false);
     const [ modalContent, setModalContent ] = useState(null);
@@ -17,8 +18,11 @@ function Install() {
     const [ selectedApp, setSelectedApp ] = useState(false);
     const [ setError ] = useGlobalStateStore(state => [ state.setError ]);
     const [ setToolTipVisible ] = useGlobalStateStore(state => [ state.setToolTipVisible ]);
-    const [ modsForCurrentApp, setModsForCurrentApp ] = useState(null);
 
+    const [ modsForCurrentApp, setModsForCurrentApp ] = useState(null);
+    const [ enabledMods, setEnabledMods ] = useState([]);
+    const [ disabledMods, setDisabledMods ] = useState([]);
+    const [ installedMods, setInstalledMods ] = useState([]);
 
     const initializeLibrary = () => {
         window.electron.send('open-file-dialog');
@@ -28,6 +32,38 @@ function Install() {
         setToolTipVisible(false);
     }
 
+    const bootGame = () => {
+        window.electron.send('launch-game', `${selectedApp.path}/eboot.bin`);
+    }
+
+    const revealInExplorer = (path) => {
+        window.electron.send('open-in-explorer', path);
+    }
+
+    const handleSelectedApp = (app) => {
+        setSelectedApp(app);
+        setModalOpen(true);
+    }
+
+    const closeModal = () => {
+        setModalOpen(false);
+    }
+
+    const enableMod = (data) => {
+        window.electron.send('enable-mod', ({ modName: data.modName, id: data.id }))
+    }
+
+    const disableMod = (data) => {
+        window.electron.send('disable-mod', ({ modName: data.modName, id: data.id }));
+    }
+
+    const requestModsForApp = (app) => {
+        if (app) {
+            window.electron.send('check-mods', app.id);
+        }
+    }
+
+    /* Error Handling */
     useEffect(() => {
         window.electron.on('error', (event, err) => {
             if (err) {
@@ -54,7 +90,7 @@ function Install() {
 
     useEffect(() => {
         if (selectedApp && selectedApp.id) {
-            window.electron.send(`get-mods`, selectedApp.id)
+            window.electron.send(`get-mods-directory`, selectedApp.id)
 
             const modsListener = (event, data) => {
                 window.electron.removeListener(`mods-${selectedApp.id}`, modsListener);
@@ -69,29 +105,6 @@ function Install() {
         }
 
     }, [ selectedApp ])
-
-    const bootGame = () => {
-        window.electron.send('launch-game', `${selectedApp.path}/eboot.bin`);
-    }
-
-    const revealInExplorer = (path) => {
-        window.electron.send('open-in-explorer', path);
-    }
-
-    const handleSelectedApp = (app) => {
-        setSelectedApp(app);
-        setModalOpen(true);
-    }
-
-    const closeModal = () => {
-        setModalOpen(false);
-    }
-
-    const requestModsForApp = (app) => {
-        if (app && app.id) {
-            window.electron.send('check-mods', app.id);
-        }
-    }
 
     /* Library */
     useEffect(() => {
@@ -109,6 +122,17 @@ function Install() {
             getJsonData();
         }
     }, [ updated ]);
+
+    useEffect(() => {
+        const handleMods = (event, data) => {
+            setInstalledMods(data.mods);
+            setEnabledMods(data.enabled);
+            setDisabledMods(data.disabled);
+        }
+
+        window.electron.on('mod-data', handleMods);
+        return () => { window.electron.removeListener('mod-data', handleMods); };
+    }, [ selectedApp, installedMods, modalOpen ])
 
     /* Modal */
     useEffect(() => {
@@ -131,8 +155,16 @@ function Install() {
                         <button className="btn bold play-btn" onClick={() => { bootGame() }}>Launch {selectedApp.title}</button>
                         <ul className="mods-list">
                             {Array.isArray(modsForCurrentApp) && modsForCurrentApp.length > 0 ? modsForCurrentApp.map(mod => {
+                                const isModEnabled = enabledMods && enabledMods.find(x => x.modName === mod) ? true : false;
                                 return (
-                                    <li className="mod-item">{mod}</li>
+                                    <div className="mod-item-group">
+                                        <li className="mod-item">{mod}</li>
+                                        <ToggleButton checked={isModEnabled} onClick={() => {
+                                            if (!isModEnabled)
+                                                enableMod({ modName: mod, id: selectedApp.id })
+                                            else disableMod({ modName: mod, id: selectedApp.id });
+                                        }} />
+                                    </div>
                                 )
                             }) : null}
                         </ul>
@@ -159,7 +191,7 @@ function Install() {
 
             requestModsForApp(selectedApp);
         }
-    }, [ selectedApp, modsForCurrentApp ])
+    }, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods, installedMods, modalOpen ])
 
     /* Refresh Games */
     useEffect(() => {

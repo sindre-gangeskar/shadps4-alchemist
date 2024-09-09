@@ -77,11 +77,10 @@ function parseSFO(buffer) {
 
     return { title, appVer, id };
 }
-function saveConfig(data) {
-    let existingData = JSON.parse(fs.readFileSync(dataFilePath + '/config.json'));
-    existingData.games = data;
-    fs.writeFileSync(dataFilePath + '/config.json', JSON.stringify(existingData, null, 2));
+function saveConfig(data, filePath) {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }
+
 
 /* Electron Initialization */
 app.whenReady().then(createWindow);
@@ -95,6 +94,8 @@ app.on('activate', () => {
 })
 
 /* IPC Handling */
+
+/* Initialization */
 ipcMain.on('open-file-dialog', async (event) => {
     const exists = fs.existsSync(`${dataFilePath}/config.json`)
 
@@ -138,6 +139,7 @@ ipcMain.on('open-file-dialog', async (event) => {
             games_path: setGamesLibrary.filePaths[ 0 ],
             mods_path: setModsDirectory.filePaths[ 0 ],
             shadPS4Exe: selectedFile,
+            games: games
         }
 
         const gamesDirectory = config.games_path;
@@ -173,7 +175,7 @@ ipcMain.on('open-file-dialog', async (event) => {
         const paths = [ config.games_path, config.mods_path, config.shadPS4Exe ];
         if (checkSameDrive(paths)) {
             fs.writeFileSync(`${dataFilePath}/config.json`, JSON.stringify(config, null, 2));
-            saveConfig(games);
+            saveConfig(config, 'config.json');
             event.sender.send('games-updated', { games: games, shadPS4Exe: config.selectedFile });
         }
 
@@ -220,20 +222,72 @@ ipcMain.on('launch-game', async (event, bin) => {
     }
 
 })
-ipcMain.on(`get-mods`, async (event, id) => {
+
+/* Mods */
+ipcMain.on(`get-mods-directory`, async (event, id) => {
     const configFile = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
     const modsPath = configFile.mods_path;
     const idExists = fs.existsSync(`${modsPath}/${id}`);
 
     if (idExists) {
         const directory = fs.readdirSync(`${modsPath}/${id}`, { withFileTypes: true }).filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
-        console.log(directory);
         event.sender.send(`mods-${id}`, { mods: directory.length > 0 ? directory : `No mods found for ${id}` });
     }
     else {
         event.sender.send(`mods-${id}`, { mods: `No mods found for ${id}` });
     }
 })
+ipcMain.on('enable-mod', async (event, data) => {
+    const exists = fs.existsSync(`${dataFilePath}/mods/${data.id}.json`);
+    if (!exists) {
+        fs.mkdirSync(dataFilePath + '/mods', { recursive: true });
+        fs.writeFileSync(`${dataFilePath}/mods/${data.id}.json`, JSON.stringify({ mods: {} }, null, 2));
+    }
+
+    const modFilePath = `${dataFilePath}/mods/${data.id}.json`;
+
+    /* Initialize mod object */
+    const mod = { modName: data.modName, enabled: true };
+
+    /* Parse mods config file for said game */
+    const fileData = JSON.parse(fs.readFileSync(modFilePath, 'utf-8'));
+
+    if (!fileData.mods[ data.modName ])
+        fileData.mods[ data.modName ] = mod;
+
+    else
+        fileData.mods[ data.modName ].enabled = true;
+
+    saveConfig(fileData, modFilePath);
+    const allMods = Object.values(fileData.mods);
+    const enabledMods = allMods.filter(x => x.enabled);
+    const disabledMods = allMods.filter(x => !x.enabled);
+    event.sender.send('mod-data', { mods: fileData.mods[ data.modName ], enabled: enabledMods, disabled: disabledMods })
+})
+ipcMain.on('disable-mod', async (event, data) => {
+    const modFilePath = `${dataFilePath}/mods/${data.id}.json`;
+
+    /* Initialize mod object */
+    const mod = { modName: data.modName, enabled: false };
+
+    /* Parse mods config file for said game */
+    const fileData = JSON.parse(fs.readFileSync(modFilePath, 'utf-8'));
+
+    if (!fileData.mods[ data.modName ])
+        fileData.mods[ data.modName ] = mod;
+
+    else
+        fileData.mods[ data.modName ].enabled = false;
+
+    saveConfig(fileData, modFilePath);
+    const allMods = Object.values(fileData.mods);
+    const enabledMods = allMods.filter(x => x.enabled);
+    const disabledMods = allMods.filter(x => !x.enabled);
+    event.sender.send('mod-data', { mods: fileData.mods[ data.modName ], enabled: enabledMods, disabled: disabledMods })
+})
+
+
+/* Client Handling */
 ipcMain.handle('get-json-data', async () => {
     const exists = fs.existsSync(dataFilePath + '/config.json');
     if (exists) {

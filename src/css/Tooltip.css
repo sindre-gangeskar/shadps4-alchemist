@@ -39,7 +39,15 @@
     padding: 5px;
 }
 
-.tooltip-btn:hover{
+.tooltip-btn:hover {
     background-color: white;
     color: black;
+}
+
+.show {
+    opacity: 1;
+}
+
+.hide {
+    opacity: 0;
 }

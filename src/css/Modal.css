@@ -117,12 +117,23 @@
     outline: 1px solid white;
 }
 
-.mods-list{
-    width: 40%;
-    background-color: var(--secondary-color);
+.mods-list {
+    height: 80%;
+    width: fit-content;
     list-style: none;
-    margin: 15px;
+    margin: 0px auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    background-color: black;
 }
-.mod-item{
+
+.mod-item {
     padding: 15px;
+}
+
+.mod-item-group {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
 }
