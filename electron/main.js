@@ -1,9 +1,11 @@
+import './reload.cjs';
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import isDev from 'electron-is-dev';
-import path from 'path';
+import path, { relative } from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -239,18 +241,28 @@ ipcMain.on(`get-mods-directory`, async (event, id) => {
 })
 ipcMain.on('enable-mod', async (event, data) => {
     const exists = fs.existsSync(`${dataFilePath}/mods/${data.id}.json`);
+    const configFile = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
     if (!exists) {
         fs.mkdirSync(dataFilePath + '/mods', { recursive: true });
         fs.writeFileSync(`${dataFilePath}/mods/${data.id}.json`, JSON.stringify({ mods: {} }, null, 2));
     }
-
-    const modFilePath = `${dataFilePath}/mods/${data.id}.json`;
+    const modConfigPath = `${dataFilePath}/mods/${data.id}.json`;
+    const gameDir = `${configFile.games_path}/${data.id}`
+    const modsDir = `${configFile.mods_path}/${data.id}`;
 
     /* Initialize mod object */
     const mod = { modName: data.modName, enabled: true };
+    const absoluteModsPath = `${modsDir}/${mod.modName}`;
+
+    const filesInMod = getFilesInMod(absoluteModsPath, mod.modName);
+    const filesInGame = enableModForGame(gameDir, filesInMod, data.id)
+
+    if (filesInGame.length === filesInMod.length)
+        console.log('Array lengths match!');
+
 
     /* Parse mods config file for said game */
-    const fileData = JSON.parse(fs.readFileSync(modFilePath, 'utf-8'));
+    const fileData = JSON.parse(fs.readFileSync(modConfigPath, 'utf-8'));
 
     if (!fileData.mods[ data.modName ])
         fileData.mods[ data.modName ] = mod;
@@ -258,20 +270,34 @@ ipcMain.on('enable-mod', async (event, data) => {
     else
         fileData.mods[ data.modName ].enabled = true;
 
-    saveConfig(fileData, modFilePath);
+    saveConfig(fileData, modConfigPath);
     const allMods = Object.values(fileData.mods);
     const enabledMods = allMods.filter(x => x.enabled);
     const disabledMods = allMods.filter(x => !x.enabled);
     event.sender.send('mod-data', { mods: fileData.mods[ data.modName ], enabled: enabledMods, disabled: disabledMods })
 })
 ipcMain.on('disable-mod', async (event, data) => {
-    const modFilePath = `${dataFilePath}/mods/${data.id}.json`;
+    const exists = fs.existsSync(`${dataFilePath}/mods/${data.id}.json`);
+    const configFile = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
+
+    if (!exists) {
+        fs.mkdirSync(dataFilePath + '/mods', { recursive: true });
+        fs.writeFileSync(`${dataFilePath}/mods/${data.id}.json`, JSON.stringify({ mods: {} }, null, 2));
+    }
+
+    const modConfigPath = `${dataFilePath}/mods/${data.id}.json`;
+    const gameDir = `${configFile.games_path}/${data.id}`
+    const modsDir = `${configFile.mods_path}/${data.id}`;
 
     /* Initialize mod object */
     const mod = { modName: data.modName, enabled: false };
+    const absoluteModsPath = `${modsDir}/${mod.modName}`;
+
+    const filesInMod = getFilesInMod(absoluteModsPath, mod.modName);
+    disableModForGame(gameDir, filesInMod, data.id)
 
     /* Parse mods config file for said game */
-    const fileData = JSON.parse(fs.readFileSync(modFilePath, 'utf-8'));
+    const fileData = JSON.parse(fs.readFileSync(modConfigPath, 'utf-8'));
 
     if (!fileData.mods[ data.modName ])
         fileData.mods[ data.modName ] = mod;
@@ -279,7 +305,7 @@ ipcMain.on('disable-mod', async (event, data) => {
     else
         fileData.mods[ data.modName ].enabled = false;
 
-    saveConfig(fileData, modFilePath);
+    saveConfig(fileData, modConfigPath);
     const allMods = Object.values(fileData.mods);
     const enabledMods = allMods.filter(x => x.enabled);
     const disabledMods = allMods.filter(x => !x.enabled);
@@ -323,3 +349,127 @@ ipcMain.handle('maximize-status', () => {
     return false;
 })
 
+
+function getFilesInMod(fullModPath, modName) {
+    const files = [];
+    const entries = fs.readdirSync(fullModPath, { withFileTypes: true, recursive: true });
+
+    const normalizedPath = path.normalize(fullModPath);
+    const modRootIndex = normalizedPath.indexOf(modName);
+    const modRoot = normalizedPath.substring(modRootIndex);
+
+    if (entries) {
+        for (const entry of entries) {
+            const relativePath = path.relative(modRoot, path.join(entry.parentPath.substring(modRootIndex)));
+            if (entry.isFile()) {
+                files.push({ path: relativePath, file: entry.name, fullPath: entry.parentPath });
+            }
+        }
+
+        /*     console.log('Mod Files:', files); */
+        return files;
+    }
+}
+function getGameRootDir(fullGamePath, appId, originalFiles, filesToLink) {
+    try {
+        const normalizedPath = path.normalize(fullGamePath);
+        const gameRootIndex = normalizedPath.indexOf(appId);
+        const gameRootDir = normalizedPath.substring(gameRootIndex);
+
+        const entries = fs.readdirSync(fullGamePath, { withFileTypes: true, recursive: true });
+        /* Set initial relative file paths */
+        for (const entry of entries) {
+            const relativePath = path.relative(gameRootDir, path.join(entry.parentPath.substring(gameRootIndex)))
+            if (entry.isFile()) {
+                originalFiles.push({ path: relativePath, file: entry.name, fullPath: path.join(fullGamePath, relativePath) });
+            }
+        }
+        const filtered = originalFiles.filter(fileToLink =>
+            filesToLink.some(originalFile =>
+                originalFile.path === fileToLink.path && originalFile.file === fileToLink.file
+            )
+        )
+
+        return filtered;
+    } catch (error) {
+        console.error(error);
+        const userError = { message: 'An error has occurred while reading the game root directory' };
+        sendError(event)
+
+    }
+
+}
+function enableModForGame(fullGamePath, mod, appId) {
+    const filesToLink = mod;
+    const originalFiles = [];
+
+    const filtered = getGameRootDir(fullGamePath, appId, originalFiles, mod)
+    const original = [ ...filtered ];
+
+
+    console.log(original);
+
+    filtered.forEach(file => {
+        const prefix = '_' + file.file;
+        const fullOriginalFilePath = path.join(file.fullPath, file.file);
+        const prefixFilePath = path.join(file.fullPath, prefix);
+        fs.renameSync(fullOriginalFilePath, prefixFilePath);
+    })
+
+    filesToLink.forEach(file => {
+        const matchingOriginalFile = original.find(orig =>
+            orig.path === file.path && orig.file === file.file
+        );
+
+        console.log(matchingOriginalFile);
+        if (matchingOriginalFile) {
+            const sourcePath = path.join(file.fullPath, file.file);
+            const destPath = path.join(matchingOriginalFile.fullPath, file.file);
+            fs.linkSync(sourcePath, destPath);
+        }
+    })
+
+    return filtered;
+}
+function disableModForGame(fullGamePath, mod, appId) {
+    const filesToUnlink = mod;
+    const originalFiles = [];
+
+    const entries = fs.readdirSync(fullGamePath, { withFileTypes: true, recursive: true });
+
+    const normalizedPath = path.normalize(fullGamePath);
+    const gameRootIndex = normalizedPath.indexOf(appId);
+    const gameRootDir = normalizedPath.substring(gameRootIndex);
+
+    /* Set initial relative file paths */
+    for (const entry of entries) {
+        const relativePath = path.relative(gameRootDir, path.join(entry.parentPath.substring(gameRootIndex)))
+        if (entry.isFile()) {
+            originalFiles.push({ path: relativePath, file: entry.name, fullPath: path.join(fullGamePath, relativePath) });
+        }
+    }
+    const filtered = originalFiles.filter(fileToUnlink =>
+        filesToUnlink.some(originalFile =>
+            originalFile.path === fileToUnlink.path && `_${originalFile.file}` === fileToUnlink.file
+        )
+    );
+
+    console.log(filtered);
+
+    filtered.forEach(file => {
+        const prefixFilePath = path.join(file.fullPath, file.file);
+        const fullOriginalFilePath = path.join(file.fullPath, file.file.replace('_', ''));
+        if (fs.existsSync(prefixFilePath)) {
+            if (fullOriginalFilePath) {
+                fs.unlinkSync(fullOriginalFilePath);
+                fs.renameSync(prefixFilePath, fullOriginalFilePath);
+            }
+        }
+    })
+
+    return 'Successfully uninstalled mod';
+}
+
+function sendError(event, message) {
+    event.sender.send('error', { message: 'Error: All directories must be on the same drive' })
+}

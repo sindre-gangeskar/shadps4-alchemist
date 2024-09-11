@@ -88,6 +88,7 @@ function Install() {
         })
     }, [])
 
+    /* Set available mods for selected app */
     useEffect(() => {
         if (selectedApp && selectedApp.id) {
             window.electron.send(`get-mods-directory`, selectedApp.id)
@@ -123,16 +124,16 @@ function Install() {
         }
     }, [ updated ]);
 
+    /* Open Modal */
     useEffect(() => {
         const handleMods = (event, data) => {
             setInstalledMods(data.mods);
             setEnabledMods(data.enabled);
             setDisabledMods(data.disabled);
         }
-
         window.electron.on('mod-data', handleMods);
         return () => { window.electron.removeListener('mod-data', handleMods); };
-    }, [ selectedApp, installedMods, modalOpen ])
+    }, [ enabledMods ])
 
     /* Modal */
     useEffect(() => {
