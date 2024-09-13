@@ -165,13 +165,15 @@ ipcMain.on('launch-game', async (event, bin) => {
 
         shadPS4Process.on('exit', code => {
             console.error('ShadPS4 exited with code: ', code);
+            event.sender.send('shadPS4-process', { processStatus: 'inactive' })
         })
 
-        shadPS4Process.unref();
+        event.sender.send('shadPS4-process', { processStatus: 'active' })
+
+      /*   shadPS4Process.unref(); */
     } catch (error) {
         console.error('An error occurred while trying to launch game', error);
     }
-
 })
 
 /* Mods */

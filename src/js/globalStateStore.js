@@ -8,7 +8,8 @@ const useGlobalStateStore = create(set => ({
     type: null,
     tooltipContent: null,
     tooltipVisible: false,
-
+    processActive: false,
+    
     setMessage: value => set(() => ({ message: value })),
     setError: value => set(() => ({ error: value })),
     setType: value => set(() => ({ type: value })),
@@ -16,7 +17,8 @@ const useGlobalStateStore = create(set => ({
     setToolTipVisible: value => set(() => ({ tooltipVisible: value })),
     setLibraryDirectory: value => set(() => ({ libraryDirectory: value })),
     setShadPS4Location: value => set(() => ({ shadPS4Location: value })),
-    setModsDirectory: value => set(() => ({ modsDirectory: value }))
+    setModsDirectory: value => set(() => ({ modsDirectory: value })),
+    setProcessActive: value => set(() => ({ processActive: value }))
 }))
 
 export default useGlobalStateStore;

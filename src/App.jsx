@@ -7,6 +7,7 @@ import Install from './views/Install';
 import Navbar from './partials/Navbar';
 import Options from './views/Options';
 import Create from './views/Create';
+import ProcessActive from './views/ProcessActive';
 import TitleBar from './partials/TitleBar';
 import Tooltip from './partials/Tooltip';
 import useGlobalStateStore from './js/globalStateStore';
@@ -15,6 +16,7 @@ function App() {
   const [ error ] = useGlobalStateStore(state => [ state.error ]);
   const [ message ] = useGlobalStateStore(state => [ state.message ]);
   const [ type ] = useGlobalStateStore(state => [ state.type ]);
+  const [ setProcessActive ] = useGlobalStateStore(state => [ state.setProcessActive ])
   const [ tooltipContent, setToolTipContent ] = useGlobalStateStore(state => [ state.tooltipContent, state.setToolTipContent ]);
   const [ tooltipVisible, setToolTipVisible ] = useGlobalStateStore(state => [ state.tooltipVisible, state.setToolTipVisible ]);
   var errorObj = {};
@@ -45,12 +47,30 @@ function App() {
     }
   }, [ error, message ])
 
+  useEffect(() => {
+    const handleShadPS4ProcessListener = async (event, data) => {
+      if (data) {
+        if (data.processStatus === 'active') {
+          navigate('/process-active');
+          setProcessActive(true);
+        }
+        if (data.processStatus === 'inactive') {
+          navigate('/install');
+          setProcessActive(false);
+        }
+      }
+    }
+    window.electron.on('shadPS4-process', handleShadPS4ProcessListener);
+    return () => {
+      window.electron.removeListener('shadPS4-process', handleShadPS4ProcessListener);
+    }
+  }, [])
 
   useEffect(() => {
     if (tooltipContent !== null)
       setToolTipVisible(true);
     else setToolTipVisible(false);
-    
+
     const awaitFade = async () => {
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -82,6 +102,9 @@ function App() {
         }></Route>
         <Route path='/create' key={'/create'} element={
           <Create key={'create'} />
+        }></Route>
+        <Route path='/process-active' key={'/process-active'} element={
+          <ProcessActive key={'process-active'} />
         }></Route>
       </Routes>
     </>

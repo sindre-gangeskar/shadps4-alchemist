@@ -39,3 +39,8 @@
     background-color: white;
     color: black;
 }
+
+.navbar-wrapper.collapsed .navbar-link{
+    pointer-events: none;
+    color: gray;
+}
