@@ -64,6 +64,9 @@ function Install() {
 	const disableMod = (data) => {
 		window.electron.send('disable-mod', ({ modName: data.modName, id: data.id }));
 	}
+	const refreshLibrary = () => {
+		window.electron.send('fetch-games-in-library');
+	}
 
 	/* Set tooltip error messages */
 	useEffect(() => {
@@ -129,6 +132,28 @@ function Install() {
 			}
 		})
 	}, [])
+
+	useEffect(() => {
+		const handleLibraryRefresh = (event, data) => {
+			setGames(data.games);
+		}
+
+		window.electron.on('refresh-library', handleLibraryRefresh);
+		return () => { window.electron.removeListener('refresh-games', handleLibraryRefresh) }
+	}, [])
+
+	/* 
+	
+			const handleGamesUpdated = (event, data) => {
+				setGames(data.games);
+				setUpdated(true);
+			};
+	
+			window.electron.on('games-updated', handleGamesUpdated);
+			return () => { window.electron.removeListener('games-updated', handleGamesUpdated); };
+	
+	*/
+
 
 	/* Set available mods and fetch their current states for selected app from IPC */
 	useEffect(() => {
@@ -340,7 +365,11 @@ function Install() {
 					<p className="message">No games library found</p>
 					<button className="btn initialize" onClick={initializeLibrary}>Select Games Directory</button>
 				</div>
-				: <GamesWrapper content={games} select={handleSelectedApp} />
+				:
+				<>
+					<button className="btn refresh" onClick={refreshLibrary}>Refresh Library</button>
+					<GamesWrapper content={games} select={handleSelectedApp} />
+				</>
 			}
 		</>
 	)

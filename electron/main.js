@@ -27,7 +27,7 @@ app.on('activate', () => {
 })
 
 
-ipcMain.on('open-file-dialog', async () => {
+ipcMain.on('open-file-dialog', async (event) => {
     const exists = fs.existsSync(`${dataFilePath}/config.json`)
 
     if (!exists)
@@ -101,7 +101,6 @@ ipcMain.on('open-file-dialog', async () => {
             }
             return true;
         }
-
         // Save and send data to rendering client
         const paths = [ config.games_path, config.mods_path, config.shadPS4Exe ];
         if (checkSameDrive(paths)) {
@@ -170,12 +169,20 @@ ipcMain.on('launch-game', async (event, bin) => {
 
         event.sender.send('shadPS4-process', { processStatus: 'active' })
 
-      /*   shadPS4Process.unref(); */
+        /*   shadPS4Process.unref(); */
     } catch (error) {
         console.error('An error occurred while trying to launch game', error);
     }
 })
+ipcMain.on('fetch-games-in-library', async (event) => {
+    const config = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
+    getGamesInLibrary(config);
 
+    if (config && config.games)
+        event.sender.send('refresh-library', { games: config.games })
+
+    console.log(config.games);
+})
 /* Mods */
 ipcMain.on(`get-mods-directory`, async (event, id) => {
     const configFile = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
@@ -377,15 +384,17 @@ function enableModForGame(fullGamePath, mod, modName, appId, event) {
             fs.renameSync(fullOriginalFilePath, prefixFilePath);
         })
 
-        filesToLink.forEach(file => {
+        filesToLink.forEach(mod => {
             try {
-                const matchingOriginalFile = original.find(ogFile =>
-                    ogFile.path === file.path && ogFile.file === file.file
-                );
+                console.log(mod);
+                const matchingOriginalFile = original.find(original =>
+                    original.path === mod.path && original.file === mod.file);
+                
+                console.log(matchingOriginalFile)
                 if (matchingOriginalFile) {
-                    const sourcePath = path.join(file.fullPath, file.file);
-                    const destPath = path.join(matchingOriginalFile.fullPath, file.file);
-                    fs.linkSync(sourcePath, destPath);
+                    const modPath = path.join(mod.fullPath, mod.file);
+                    const gamePath = path.join(matchingOriginalFile.fullPath, mod.file);
+                    fs.linkSync(modPath, gamePath);
                 }
             } catch (error) {
                 console.error(error);
@@ -522,4 +531,26 @@ function parseSFO(buffer) {
 }
 function saveConfig(data, filePath) {
     fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+function getGamesInLibrary(config) {
+    const gamesDirectory = config.games_path;
+    const gamesAvailable = fs.readdirSync(gamesDirectory).filter(x => x.startsWith('CUSA')); // Make sure all directories start with CUSA
+
+    gamesAvailable.forEach(directory => {
+        const sfoExists = fs.existsSync(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo'));
+        const binExists = fs.existsSync(path.join(gamesDirectory, directory, 'eboot.bin'));
+        if (sfoExists && binExists) { // Game must have a .sfo and eboot.bin file in order to be seen as a game available to play and be added to the library
+            const sfo = fs.readFileSync(path.normalize(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo')));
+            const icon = path.normalize(path.join(gamesDirectory, directory, 'sce_sys', 'icon0.png'));
+            if (sfoExists) {
+                const game = parseSFO(sfo);
+                if (!games.some(x => x.id === game.id)) { // Add game only if the games list doesn't already have an identical game based on the ID provided
+                    games.push({ title: game.title, appVersion: game.appVer, id: game.id, icon: icon, path: `${gamesDirectory}/${directory}` });
+                }
+            }
+        }
+    })
+
+    config.games = games;
+    saveConfig(config, `${dataFilePath}/config.json`);
 }
