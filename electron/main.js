@@ -1,11 +1,9 @@
-import './reload.cjs';
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import isDev from 'electron-is-dev';
-import path, { relative } from 'path';
+import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
-
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,73 +14,6 @@ if (!fs.existsSync(path.join(__dirname, '..', 'data')))
     fs.mkdirSync(path.join(__dirname, '..', 'data'), {
         recursive: true
     })
-
-function createWindow() {
-    const win = new BrowserWindow({
-        width: 800,
-        height: 600,
-        minHeight: 600,
-        minWidth: 800,
-        frame: false,
-        webPreferences: {
-            nodeIntegration: false,
-            contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js'),
-            webSecurity: false
-        }
-    })
-
-    isDev ? win.loadURL('http://localhost:3000') :
-        win.loadFile(path.join(__dirname, '..', 'public', 'index.html'));
-}
-function readUInt(buffer, offset, length) {
-    if (length === 1) return buffer.readUInt8(offset);
-    if (length === 2) return buffer.readUInt16LE(offset);
-    if (length === 4) return buffer.readUInt32LE(offset);
-}
-function parseSFO(buffer) {
-    let title;
-    let id;
-    let appVer;
-
-    // Read the SFO header
-    const magic = buffer.slice(0, 4).toString('ascii');
-    if (magic !== "\0PSF")
-        throw new Error('Invalid magic number in sfo');
-
-    const keyTableStart = readUInt(buffer, 8, 4);   // Offset to key table
-    const dataTableStart = readUInt(buffer, 12, 4); // Offset to data table
-    const tableEntries = readUInt(buffer, 16, 4);   // Number of parameters (key-value pairs)
-
-    // Iterate through each parameter entry in the header
-    for (let i = 0; i < tableEntries; i++) {
-        const entryOffset = 20 + (i * 16);  // Each entry is 16 bytes
-
-        const keyOffset = readUInt(buffer, entryOffset, 2);  // Offset into the key table
-        const dataLength = readUInt(buffer, entryOffset + 4, 4); // Length of the data
-        const dataOffset = readUInt(buffer, entryOffset + 12, 4); // Offset into the data table
-
-        // Get the key name (e.g., "TITLE")
-        const key = buffer.toString('ascii', keyTableStart + keyOffset, buffer.indexOf(0, keyTableStart + keyOffset));
-
-        // If the key is "TITLE", read the value from the data table
-        if (key === 'TITLE') {
-            title = buffer.toString('utf-8', dataTableStart + dataOffset, dataTableStart + dataOffset + dataLength - 1);
-        }
-        if (key === 'APP_VER') {
-            appVer = buffer.toString('utf-8', dataTableStart + dataOffset, dataTableStart + dataOffset + dataLength - 1);
-        }
-        if (key === 'TITLE_ID') {
-            id = buffer.toString('utf-8', dataTableStart + dataOffset, dataTableStart + dataOffset + dataLength - 1);
-        }
-    }
-
-    return { title, appVer, id };
-}
-function saveConfig(data, filePath) {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
-}
-
 
 /* Electron Initialization */
 app.whenReady().then(createWindow);
@@ -95,10 +26,8 @@ app.on('activate', () => {
         createWindow();
 })
 
-/* IPC Handling */
 
-/* Initialization */
-ipcMain.on('open-file-dialog', async (event) => {
+ipcMain.on('open-file-dialog', async () => {
     const exists = fs.existsSync(`${dataFilePath}/config.json`)
 
     if (!exists)
@@ -192,10 +121,30 @@ ipcMain.on('open-file-dialog', async (event) => {
         }
     }
 })
-ipcMain.on('open-in-explorer', async (event, path) => {
-    if (path) {
-        shell.openPath(path);
-        console.log(path);
+ipcMain.on('open-in-explorer', async (event, data) => {
+    try {
+        const pathExists = (path) => {
+            const exists = fs.existsSync(path);
+            return exists;
+        }
+        const initialData = parseInitialModData(event, data.data)
+        if (initialData) {
+            if (data.type === 'game' && pathExists(initialData.gameDir))
+                shell.openPath(initialData.gameDir);
+
+            if (data.type === 'mod') {
+                if (pathExists(initialData.modsDir))
+                    shell.openPath(initialData.modsDir)
+                else {
+                    fs.mkdirSync(initialData.modsDir, { recursive: true });
+                    shell.openPath(initialData.modsDir);
+                }
+            }
+            else return;
+        }
+    } catch (error) {
+        sendError(event, 'test', 'test', 500);
+        console.error(error);
     }
 })
 ipcMain.on('launch-game', async (event, bin) => {
@@ -233,86 +182,66 @@ ipcMain.on(`get-mods-directory`, async (event, id) => {
 
     if (idExists) {
         const directory = fs.readdirSync(`${modsPath}/${id}`, { withFileTypes: true }).filter(dirent => dirent.isDirectory()).map(dirent => dirent.name);
-        event.sender.send(`mods-${id}`, { mods: directory.length > 0 ? directory : `No mods found for ${id}` });
+        event.sender.send(`mods-${id}`, { mods: directory.length > 0 ? directory : `No mods installed for ${id}` });
     }
     else {
-        event.sender.send(`mods-${id}`, { mods: `No mods found for ${id}` });
+        event.sender.send(`mods-${id}`, { mods: `No directory in mods library exist for: ${id}` });
     }
 })
 ipcMain.on('enable-mod', async (event, data) => {
-    const exists = fs.existsSync(`${dataFilePath}/mods/${data.id}.json`);
-    const configFile = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
-    if (!exists) {
-        fs.mkdirSync(dataFilePath + '/mods', { recursive: true });
-        fs.writeFileSync(`${dataFilePath}/mods/${data.id}.json`, JSON.stringify({ mods: {} }, null, 2));
+    try {
+        const initialData = parseInitialModData(event, data);
+        /* Initialize mod object */
+        const mod = { modName: data.modName, enabled: true };
+        const absoluteModsPath = `${initialData.modsDir}/${mod.modName}`;
+
+        /* Get files from mod, and enable them */
+        const filesInMod = getFilesInMod(absoluteModsPath, mod.modName);
+        await enableModForGame(initialData.gameDir, filesInMod, mod.modName, data.id, event)
+
+        /* Parse mods config file for said game */
+        const fileData = JSON.parse(fs.readFileSync(initialData.modConfigPath, 'utf-8'));
+
+        if (!fileData.mods[ data.modName ])
+            fileData.mods[ data.modName ] = mod;
+        else fileData.mods[ data.modName ].enabled = true;
+
+        const mods = getAllMods(fileData);
+        saveConfig(fileData, initialData.modConfigPath);
+        event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
+    } catch (error) {
+        console.error(error);
+        sendError(event, 'An error has occurred while enabling enabling mod', 'EnableModErr', 500);
     }
-    const modConfigPath = `${dataFilePath}/mods/${data.id}.json`;
-    const gameDir = `${configFile.games_path}/${data.id}`
-    const modsDir = `${configFile.mods_path}/${data.id}`;
 
-    /* Initialize mod object */
-    const mod = { modName: data.modName, enabled: true };
-    const absoluteModsPath = `${modsDir}/${mod.modName}`;
-
-    const filesInMod = getFilesInMod(absoluteModsPath, mod.modName);
-    const filesInGame = enableModForGame(gameDir, filesInMod, data.id)
-
-    if (filesInGame.length === filesInMod.length)
-        console.log('Array lengths match!');
-
-
-    /* Parse mods config file for said game */
-    const fileData = JSON.parse(fs.readFileSync(modConfigPath, 'utf-8'));
-
-    if (!fileData.mods[ data.modName ])
-        fileData.mods[ data.modName ] = mod;
-
-    else
-        fileData.mods[ data.modName ].enabled = true;
-
-    saveConfig(fileData, modConfigPath);
-    const allMods = Object.values(fileData.mods);
-    const enabledMods = allMods.filter(x => x.enabled);
-    const disabledMods = allMods.filter(x => !x.enabled);
-    event.sender.send('mod-data', { mods: fileData.mods[ data.modName ], enabled: enabledMods, disabled: disabledMods })
 })
 ipcMain.on('disable-mod', async (event, data) => {
-    const exists = fs.existsSync(`${dataFilePath}/mods/${data.id}.json`);
-    const configFile = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
+    try {
+        const initialData = parseInitialModData(event, data);
+        const fileData = JSON.parse(fs.readFileSync(initialData.modConfigPath, 'utf-8'));
 
-    if (!exists) {
-        fs.mkdirSync(dataFilePath + '/mods', { recursive: true });
-        fs.writeFileSync(`${dataFilePath}/mods/${data.id}.json`, JSON.stringify({ mods: {} }, null, 2));
+        console.log(fileData);
+
+        /* Initialize mod object */
+        const mod = { modName: data.modName, enabled: false };
+        const absoluteModsPath = `${initialData.modsDir}/${mod.modName}`;
+
+        const filesInMod = getFilesInMod(absoluteModsPath, mod.modName);
+        disableModForGame(initialData.gameDir, filesInMod, mod.modName, data.id, event)
+
+        /* If Mod does not exist in file - add it */
+        if (!fileData.mods[ data.modName ])
+            fileData.mods[ data.modName ] = mod;
+        else fileData.mods[ data.modName ].enabled = false;
+
+        const mods = getAllMods(fileData)
+        saveConfig(fileData, initialData.modConfigPath);
+        event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
+    } catch (error) {
+        console.error(error);
+        return sendError(event, 'An error occurred while trying to disable mod', 'UnknownError', 500);
     }
-
-    const modConfigPath = `${dataFilePath}/mods/${data.id}.json`;
-    const gameDir = `${configFile.games_path}/${data.id}`
-    const modsDir = `${configFile.mods_path}/${data.id}`;
-
-    /* Initialize mod object */
-    const mod = { modName: data.modName, enabled: false };
-    const absoluteModsPath = `${modsDir}/${mod.modName}`;
-
-    const filesInMod = getFilesInMod(absoluteModsPath, mod.modName);
-    disableModForGame(gameDir, filesInMod, data.id)
-
-    /* Parse mods config file for said game */
-    const fileData = JSON.parse(fs.readFileSync(modConfigPath, 'utf-8'));
-
-    if (!fileData.mods[ data.modName ])
-        fileData.mods[ data.modName ] = mod;
-
-    else
-        fileData.mods[ data.modName ].enabled = false;
-
-    saveConfig(fileData, modConfigPath);
-    const allMods = Object.values(fileData.mods);
-    const enabledMods = allMods.filter(x => x.enabled);
-    const disabledMods = allMods.filter(x => !x.enabled);
-    event.sender.send('mod-data', { mods: fileData.mods[ data.modName ], enabled: enabledMods, disabled: disabledMods })
 })
-
-
 /* Client Handling */
 ipcMain.handle('get-json-data', async () => {
     const exists = fs.existsSync(dataFilePath + '/config.json');
@@ -348,8 +277,43 @@ ipcMain.handle('maximize-status', () => {
 
     return false;
 })
+ipcMain.handle('get-mod-states', async (event, data) => {
+    const initialData = parseInitialModData(event, data);
+    const modData = JSON.parse(fs.readFileSync(`${initialData.modConfigPath}`));
+    return modData;
+})
 
+function parseInitialModData(event, data) {
+    try {
+        const exists = fs.existsSync(`${dataFilePath}/mods/${data.id}.json`);
+        const configFile = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
 
+        if (!exists) {
+            fs.mkdirSync(dataFilePath + '/mods', { recursive: true });
+            fs.writeFileSync(`${dataFilePath}/mods/${data.id}.json`, JSON.stringify({ mods: {} }, null, 2));
+        }
+
+        const modConfigPath = `${dataFilePath}/mods/${data.id}.json`;
+        const gameDir = `${configFile.games_path}/${data.id}`
+        const modsDir = `${configFile.mods_path}/${data.id}`;
+
+        return {
+            modConfigPath: modConfigPath,
+            gameDir: gameDir,
+            modsDir: modsDir,
+        }
+    } catch (error) {
+        console.error(error);
+        return sendError(event, 'An error occurred while trying to parse mod config file', 'ModParsingError', 500);
+    }
+}
+function getAllMods(allModsList) {
+    const allMods = Object.values(allModsList.mods);
+    const enabledMods = allMods.filter(x => x.enabled);
+    const disabledMods = allMods.filter(x => !x.enabled);
+
+    return ({ all: allMods, enabled: enabledMods, disabled: disabledMods });
+}
 function getFilesInMod(fullModPath, modName) {
     const files = [];
     const entries = fs.readdirSync(fullModPath, { withFileTypes: true, recursive: true });
@@ -366,7 +330,6 @@ function getFilesInMod(fullModPath, modName) {
             }
         }
 
-        /*     console.log('Mod Files:', files); */
         return files;
     }
 }
@@ -393,45 +356,49 @@ function getGameRootDir(fullGamePath, appId, originalFiles, filesToLink) {
         return filtered;
     } catch (error) {
         console.error(error);
-        const userError = { message: 'An error has occurred while reading the game root directory' };
-        sendError(event)
-
+        sendError('An error has occurred while reading the game root directory');
     }
 
 }
-function enableModForGame(fullGamePath, mod, appId) {
-    const filesToLink = mod;
-    const originalFiles = [];
+function enableModForGame(fullGamePath, mod, modName, appId, event) {
+    try {
+        const filesToLink = mod;
+        const originalFiles = [];
 
-    const filtered = getGameRootDir(fullGamePath, appId, originalFiles, mod)
-    const original = [ ...filtered ];
+        const filtered = getGameRootDir(fullGamePath, appId, originalFiles, mod)
+        const original = [ ...filtered ];
 
+        filtered.forEach(file => {
+            const prefix = '_' + file.file;
+            const fullOriginalFilePath = path.join(file.fullPath, file.file);
+            const prefixFilePath = path.join(file.fullPath, prefix);
+            fs.renameSync(fullOriginalFilePath, prefixFilePath);
+        })
 
-    console.log(original);
+        filesToLink.forEach(file => {
+            try {
+                const matchingOriginalFile = original.find(ogFile =>
+                    ogFile.path === file.path && ogFile.file === file.file
+                );
+                if (matchingOriginalFile) {
+                    const sourcePath = path.join(file.fullPath, file.file);
+                    const destPath = path.join(matchingOriginalFile.fullPath, file.file);
+                    fs.linkSync(sourcePath, destPath);
+                }
+            } catch (error) {
+                console.error(error);
+                sendError(event, 'Error while trying to enable mod has occurred', 'EnableModErr', 500);
+            }
+        })
 
-    filtered.forEach(file => {
-        const prefix = '_' + file.file;
-        const fullOriginalFilePath = path.join(file.fullPath, file.file);
-        const prefixFilePath = path.join(file.fullPath, prefix);
-        fs.renameSync(fullOriginalFilePath, prefixFilePath);
-    })
-
-    filesToLink.forEach(file => {
-        const matchingOriginalFile = original.find(orig =>
-            orig.path === file.path && orig.file === file.file
-        );
-
-        console.log(matchingOriginalFile);
-        if (matchingOriginalFile) {
-            const sourcePath = path.join(file.fullPath, file.file);
-            const destPath = path.join(matchingOriginalFile.fullPath, file.file);
-            fs.linkSync(sourcePath, destPath);
-        }
-    })
-
-    return filtered;
+        sendMessage(event, modName, 'Successfully Enabled Mod', 200, 'success');
+        return filtered;
+    } catch (error) {
+        console.error(error);
+        sendError(event, 'Error while trying to enable mod has occurred', 'EnableModErr', 500);
+    }
 }
-function disableModForGame(fullGamePath, mod, appId) {
+function disableModForGame(fullGamePath, mod, modName, appId, event) {
     const filesToUnlink = mod;
     const originalFiles = [];
 
@@ -454,8 +421,6 @@ function disableModForGame(fullGamePath, mod, appId) {
         )
     );
 
-    console.log(filtered);
-
     filtered.forEach(file => {
         const prefixFilePath = path.join(file.fullPath, file.file);
         const fullOriginalFilePath = path.join(file.fullPath, file.file.replace('_', ''));
@@ -463,13 +428,96 @@ function disableModForGame(fullGamePath, mod, appId) {
             if (fullOriginalFilePath) {
                 fs.unlinkSync(fullOriginalFilePath);
                 fs.renameSync(prefixFilePath, fullOriginalFilePath);
+                sendError(event, modName, `An error has occurred while trying to disable mod: ${mod}`, 500)
             }
+            else {
+                console.error('No original files found to revert prefixed state');
+                return sendError(event, modName, `No original files found to revert prefixed state, exiting...`, 500);
+            }
+        }
+        sendMessage(event, modName, 'Successfully Disabled Mod', 200, 'success');
+    })
+}
+function sendError(event, message, name, code) {
+    const obj = {
+        message: message,
+        name: name,
+        code: code,
+        type: 'error'
+    };
+    event.sender.send('error', obj);
+}
+function sendMessage(event, message, name, code, type) {
+    const obj = {
+        message: message,
+        name: name,
+        code: code,
+        type: type
+    };
+    event.sender.send('message', obj);
+}
+function createWindow() {
+    const win = new BrowserWindow({
+        width: 800,
+        height: 600,
+        minHeight: 600,
+        minWidth: 800,
+        frame: false,
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js'),
+            webSecurity: false
         }
     })
 
-    return 'Successfully uninstalled mod';
+    isDev ? win.loadURL('http://localhost:3000') :
+        win.loadFile(path.join(__dirname, '..', 'public', 'index.html'));
 }
+function readUInt(buffer, offset, length) {
+    if (length === 1) return buffer.readUInt8(offset);
+    if (length === 2) return buffer.readUInt16LE(offset);
+    if (length === 4) return buffer.readUInt32LE(offset);
+}
+function parseSFO(buffer) {
+    let title;
+    let id;
+    let appVer;
 
-function sendError(event, message) {
-    event.sender.send('error', { message: 'Error: All directories must be on the same drive' })
+    // Read the SFO header
+    const magic = buffer.slice(0, 4).toString('ascii');
+    if (magic !== "\0PSF")
+        throw new Error('Invalid magic number in sfo');
+
+    const keyTableStart = readUInt(buffer, 8, 4);   // Offset to key table
+    const dataTableStart = readUInt(buffer, 12, 4); // Offset to data table
+    const tableEntries = readUInt(buffer, 16, 4);   // Number of parameters (key-value pairs)
+
+    // Iterate through each parameter entry in the header
+    for (let i = 0; i < tableEntries; i++) {
+        const entryOffset = 20 + (i * 16);  // Each entry is 16 bytes
+
+        const keyOffset = readUInt(buffer, entryOffset, 2);  // Offset into the key table
+        const dataLength = readUInt(buffer, entryOffset + 4, 4); // Length of the data
+        const dataOffset = readUInt(buffer, entryOffset + 12, 4); // Offset into the data table
+
+        // Get the key name (e.g., "TITLE")
+        const key = buffer.toString('ascii', keyTableStart + keyOffset, buffer.indexOf(0, keyTableStart + keyOffset));
+
+        // If the key is "TITLE", read the value from the data table
+        if (key === 'TITLE') {
+            title = buffer.toString('utf-8', dataTableStart + dataOffset, dataTableStart + dataOffset + dataLength - 1);
+        }
+        if (key === 'APP_VER') {
+            appVer = buffer.toString('utf-8', dataTableStart + dataOffset, dataTableStart + dataOffset + dataLength - 1);
+        }
+        if (key === 'TITLE_ID') {
+            id = buffer.toString('utf-8', dataTableStart + dataOffset, dataTableStart + dataOffset + dataLength - 1);
+        }
+    }
+
+    return { title, appVer, id };
+}
+function saveConfig(data, filePath) {
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
 }

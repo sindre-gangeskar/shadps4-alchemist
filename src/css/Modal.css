@@ -5,25 +5,30 @@
     position: fixed;
     width: 100vw;
     height: 100vh;
-    background-color: rgba(0, 0, 0, 0.623);
     z-index: -1;
 }
 
 .modal-wrapper {
-    position: absolute;
+    position: fixed;
     display: flex;
     flex-direction: column;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     color: white;
-    width: 100vw;
-    height: 100vh;
+    width: 80dvw;
+    height: 80dvh;
     max-width: 1200px;
     max-height: 800px;
     min-width: 400px;
     min-height: 300px;
     z-index: 1;
+    transition: opacity 500ms cubic-bezier(0.19, 1, 0.22, 1);
+    border-radius: 0.5rem;
+}
+
+.modal-wrapper.show {
+    box-shadow: 0px 20px 80px var(--shadow);
 }
 
 .modal-header-wrapper {
@@ -44,14 +49,15 @@
 
 .modal-body-wrapper {
     display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex: 1;
+    flex-direction: row;
     position: relative;
     width: 100%;
     height: 100%;
     text-align: center;
-    background-color: rgba(0, 0, 0, 0.75);
+    background-color: var(--primary-color);
+    color: rgb(255, 255, 255);
+    font-weight: bolder;
+    align-items: center;
 }
 
 .modal-footer-wrapper {
@@ -62,14 +68,14 @@
     height: 100%;
     width: 100%;
     align-content: center;
-    padding: 10px;
+    padding: 20px;
     background-color: rgba(0, 0, 0, 0.75);
     border-radius: 0 0 0.5rem 0.5rem;
 }
 
 .modal-close {
     background-color: black;
-    width: 80px !important;
+    width: 150px !important;
 }
 
 .modal-close:hover {
@@ -98,19 +104,17 @@
     color: black;
 }
 
-.btn.play-btn {
-    position: absolute;
-    top: 0;
-    right: 0;
+.play-btn {
     font-size: 0.75rem;
     background: linear-gradient(to right, var(--secondary-color), var(--tertiary-primary));
+    height: fit-content;
+    max-width: 80%;
     width: 100%;
-    max-width: 250px;
     overflow: hidden;
     text-wrap: nowrap;
     text-overflow: ellipsis;
     outline: 1px solid rgba(255, 255, 255, 0);
-    margin: 10px;
+    padding: 15px;
 }
 
 .play-btn:hover {
@@ -118,22 +122,141 @@
 }
 
 .mods-list {
-    height: 80%;
-    width: fit-content;
+    height: 400px;
+    width: 500px;
     list-style: none;
     margin: 0px auto;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    background-color: black;
+    align-items: center;
+    letter-spacing: 3px;
+    font-size: 0.8rem;
+    overflow-y: auto;
+}
+
+.mods-list::-webkit-scrollbar-track {
+    background-color: transparent;
+    border-radius: 1.5rem;
+}
+
+.mods-list::-webkit-scrollbar {
+    width: 8px;
+    overflow: visible;
+}
+
+.mods-list::-webkit-scrollbar-thumb{
+    background-color: var(--tertiary-primary);
+    border-radius: 1.5rem;
 }
 
 .mod-item {
     padding: 15px;
+    text-overflow: ellipsis;
+    text-wrap: nowrap;
+    overflow: hidden;
 }
 
 .mod-item-group {
+    width: 80%;
     align-items: center;
     display: flex;
     justify-content: space-between;
+}
+
+.mod-divider {
+    width: 80%;
+    background: linear-gradient(to right, #00000000, var(--secondary-color), #00000000 95%);
+    height: 1px;
+    margin: 15px;
+}
+
+.app-details-wrapper {
+    position: relative;
+    width: 400px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background: none;
+}
+
+.game-details-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    font-family: monospace;
+    letter-spacing: 0cap;
+    justify-content: center;
+    flex: 1;
+    text-align: start;
+    font-family: 'JetBrains Mono';
+    letter-spacing: 2px;
+    width: 80%;
+}
+
+.game-detail {
+    display: flex;
+    justify-content: space-between;
+    font-weight: normal;
+    font-size: 0.7rem;
+    text-wrap: nowrap;
+}
+
+.game-detail > .game-title{
+    margin: 0px auto;
+    font-weight: bolder;
+}
+
+.game-detail p:nth-child(2) {
+    font-weight: bolder;
+}
+
+.app-poster {
+    width: 60%;
+    margin-top: 50px;
+    box-shadow: 0px 5px 30px var(--shadow);
+    flex: 1;
+}
+
+.app-mods-wrapper {
+    position: relative;
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+
+.mods-text-wrapper {
+    display: flex;
+    position: relative;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+}
+
+.mods-text {
+    font-size: 1.5rem;
+}
+
+.mods-title {
+    font-weight: bolder;
+    font-family: 'JetBrains Mono';
+    text-align: center;
+    letter-spacing: 4px;
+}
+
+@keyframes scaleOut {
+    from {
+        position: fixed;
+        transform: scaleY(0);
+    }
+
+    to {
+        transform: scaleY(1);
+    }
 }

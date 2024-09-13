@@ -13,10 +13,12 @@ import useGlobalStateStore from './js/globalStateStore';
 
 function App() {
   const [ error ] = useGlobalStateStore(state => [ state.error ]);
+  const [ message ] = useGlobalStateStore(state => [ state.message ]);
+  const [ type ] = useGlobalStateStore(state => [ state.type ]);
   const [ tooltipContent, setToolTipContent ] = useGlobalStateStore(state => [ state.tooltipContent, state.setToolTipContent ]);
   const [ tooltipVisible, setToolTipVisible ] = useGlobalStateStore(state => [ state.tooltipVisible, state.setToolTipVisible ]);
   var errorObj = {};
-
+  var messageObj = {};
   const navigate = useNavigate();
   useEffect(() => {
     navigate('/install')
@@ -31,19 +33,46 @@ function App() {
         errorObj.body = error.body;
       if (error.footer)
         errorObj.footer = error.footer;
+
+      setToolTipContent(errorObj);
     }
 
-    setToolTipContent(errorObj);
+    if (message) {
+      if (message.header) messageObj.header = message.header;
+      if (message.body) messageObj.body = message.body;
+      if (message.footer) messageObj.footer = message.footer;
+      setToolTipContent(messageObj);
+    }
+  }, [ error, message ])
+
+
+  useEffect(() => {
     if (tooltipContent !== null)
       setToolTipVisible(true);
     else setToolTipVisible(false);
-  }, [ error ])
+    
+    const awaitFade = async () => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve()
+        }, 2000)
+      })
+    }
+    if (type === 'success') {
+      const fadeOut = async () => {
+        await awaitFade();
+        setToolTipVisible(false);
+      }
+      fadeOut();
+    }
+
+  }, [ tooltipContent, type ])
 
   return (
     <>
       <TitleBar />
       <Navbar />
-      <Tooltip content={tooltipContent} visible={tooltipVisible} />
+      <Tooltip content={tooltipContent} visible={tooltipVisible} type={type} />
       <Routes>
         <Route path='/options' key={'/options'} element={
           <Options key={'options'}></Options>

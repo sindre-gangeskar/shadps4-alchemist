@@ -51,3 +51,46 @@
 .hide {
     opacity: 0;
 }
+
+
+
+.tooltip-wrapper.success {
+    background-color: white !important;
+    border-radius: 0.5rem;
+    width: 1200px;
+    display: flex;
+    flex-direction: row;
+    z-index: 10;
+    align-items: center;
+}
+
+.tooltip-header-success{
+    position: relative;
+    color: black;
+    font-weight: bolder;
+    text-align: center;
+    flex: 1;
+    text-align: start;
+}
+
+.tooltip-body-success{
+    color: black;
+    text-wrap: nowrap;
+    flex: 1;
+    text-align: center;
+}
+
+.tooltip-footer-success{
+    position: relative;
+    width: 50px;
+    color: var(--secondary-color);
+    flex: 1;
+    align-items: center;
+    height: 100%;
+    text-align: end;
+}
+
+.icon{
+    transform-origin: center;
+    position: relative;
+}

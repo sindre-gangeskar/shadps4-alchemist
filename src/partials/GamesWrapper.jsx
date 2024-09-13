@@ -1,7 +1,7 @@
 import React from "react";
 import GameCard from "./GameCard";
 
-function GamesWrapper({ content, select }) {
+function GamesWrapper({ content, select, iconSrc }) {
     const click = (app) => {
         select(app);
     }

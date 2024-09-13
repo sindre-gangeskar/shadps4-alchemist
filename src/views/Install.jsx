@@ -6,217 +6,344 @@ import { IoIosFolderOpen } from "react-icons/io";
 import GamesWrapper from "../partials/GamesWrapper";
 import Modal from '../partials/Modal';
 import ToggleButton from '../partials/ToggleButton';
+import { FaCheckCircle, FaExclamationCircle, FaExclamationTriangle } from "react-icons/fa";
+import { FaFaceFrown } from "react-icons/fa6";
+
 function Install() {
-    const [ setLibraryDirectory ] = useGlobalStateStore(state => [ state.setLibraryDirectory ]);
-    const [ setShadPS4Location ] = useGlobalStateStore(state => [ state.setShadPS4Location ]);
-    const [ setModsDirectory ] = useGlobalStateStore(state => [ state.setModsDirectory ]);
+	const [ setLibraryDirectory ] = useGlobalStateStore(state => [ state.setLibraryDirectory ]);
+	const [ setShadPS4Location ] = useGlobalStateStore(state => [ state.setShadPS4Location ]);
+	const [ setModsDirectory ] = useGlobalStateStore(state => [ state.setModsDirectory ]);
 
-    const [ games, setGames ] = useState([]);
-    const [ updated, setUpdated ] = useState(false);
-    const [ modalContent, setModalContent ] = useState(null);
-    const [ modalOpen, setModalOpen ] = useState(false);
-    const [ selectedApp, setSelectedApp ] = useState(false);
-    const [ setError ] = useGlobalStateStore(state => [ state.setError ]);
-    const [ setToolTipVisible ] = useGlobalStateStore(state => [ state.setToolTipVisible ]);
+	const [ games, setGames ] = useState([]);
+	const [ updated, setUpdated ] = useState(false);
+	const [ modalContent, setModalContent ] = useState(null);
+	const [ modalOpen, setModalOpen ] = useState(false);
+	const [ selectedApp, setSelectedApp ] = useState(false);
+	const [ setError ] = useGlobalStateStore(state => [ state.setError ]);
+	const [ setMessage ] = useGlobalStateStore(state => [ state.setMessage ]);
+	const [ type, setType ] = useGlobalStateStore(state => [ state.type, state.setType ]);
+	const [ tooltipVisible, setToolTipVisible ] = useGlobalStateStore(state => [ state.tooltipVisible, state.setToolTipVisible ]);
 
-    const [ modsForCurrentApp, setModsForCurrentApp ] = useState(null);
-    const [ enabledMods, setEnabledMods ] = useState([]);
-    const [ disabledMods, setDisabledMods ] = useState([]);
-    const [ installedMods, setInstalledMods ] = useState([]);
+	const [ modsForCurrentApp, setModsForCurrentApp ] = useState(null);
+	const [ enabledMods, setEnabledMods ] = useState([]);
+	const [ disabledMods, setDisabledMods ] = useState([]);
+	const [ installedMods, setInstalledMods ] = useState([]);
 
-    const initializeLibrary = () => {
-        window.electron.send('open-file-dialog');
-    }
+	const initializeLibrary = () => {
+		window.electron.send('open-file-dialog');
+	}
 
-    const hideTooltip = async () => {
-        setToolTipVisible(false);
-    }
+	const hideTooltip = async () => {
+		setToolTipVisible(false);
+	}
 
-    const bootGame = () => {
-        window.electron.send('launch-game', `${selectedApp.path}/eboot.bin`);
-    }
+	const bootGame = () => {
+		window.electron.send('launch-game', `${selectedApp.path}/eboot.bin`);
+	}
 
-    const revealInExplorer = (path) => {
-        window.electron.send('open-in-explorer', path);
-    }
+	const revealInExplorer = (app, type) => {
+		console.log(app, type);
+		window.electron.send('open-in-explorer', { data: app, type: type });
+	}
 
-    const handleSelectedApp = (app) => {
-        setSelectedApp(app);
-        setModalOpen(true);
-    }
+	const handleSelectedApp = (app) => {
+		setSelectedApp(app);
+		setTimeout(() => {
+			setModalOpen(true);
+		}, 100);
+	}
 
-    const closeModal = () => {
-        setModalOpen(false);
-    }
+	const closeModal = () => {
+		setModalOpen(false);
+	}
 
-    const enableMod = (data) => {
-        window.electron.send('enable-mod', ({ modName: data.modName, id: data.id }))
-    }
+	const enableMod = (data) => {
+		window.electron.send('enable-mod', ({ modName: data.modName, id: data.id }))
+	}
 
-    const disableMod = (data) => {
-        window.electron.send('disable-mod', ({ modName: data.modName, id: data.id }));
-    }
+	const disableMod = (data) => {
+		window.electron.send('disable-mod', ({ modName: data.modName, id: data.id }));
+	}
 
-    const requestModsForApp = (app) => {
-        if (app) {
-            window.electron.send('check-mods', app.id);
-        }
-    }
+	/* Set tooltip error messages */
+	useEffect(() => {
+		window.electron.on('error', (event, err) => {
+			if (err) {
+				const header = <div className="tooltip-header">
+					<p className="tooltip-title">{err.name} <FaExclamationCircle /></p>
+				</div>
 
-    /* Error Handling */
-    useEffect(() => {
-        window.electron.on('error', (event, err) => {
-            if (err) {
-                const header = <div className="tooltip-header">
-                    <p className="tooltip-title">{err.name}</p>
-                </div>
+				const body = <div className="tooltip-body">
+					<p>{err.message}</p>
+				</div>
 
-                const body = <div className="tooltip-body">
-                    <p>{err.message}</p>
-                </div>
+				const footer = <div className="tooltip-footer">
+					<button className="btn tooltip-btn" onClick={hideTooltip}>OK</button>
+				</div>
+				const obj = ({ header: header, body: body, footer: footer })
+				setError(obj);
+			}
 
-                const footer = <div className="tooltip-footer">
-                    <button className="btn tooltip-btn" onClick={hideTooltip}>OK</button>
-                </div>
-                const obj = ({ header: header, body: body, footer: footer })
-                setError(obj);
-            }
+			return () => {
+				window.electron.removeAllListeners('error');
+			}
+		})
+		window.electron.on('message', (event, message) => {
+			if (message) {
+				if (message.type === 'success') {
+					setType('success')
+					const header = <div className="tooltip-header-success">
+						<p className="tooltip-title-success">{message.name}</p>
+					</div>
 
-            return () => {
-                window.electron.removeAllListeners('error');
-            }
-        })
-    }, [])
+					const body = <div className="tooltip-body-success">
+						<p>{message.message}</p>
+					</div>
 
-    /* Set available mods for selected app */
-    useEffect(() => {
-        if (selectedApp && selectedApp.id) {
-            window.electron.send(`get-mods-directory`, selectedApp.id)
+					const footer = <div className="tooltip-footer-success">
+						<p className="icon">{<FaCheckCircle size={25} />}</p>
+					</div>
 
-            const modsListener = (event, data) => {
-                window.electron.removeListener(`mods-${selectedApp.id}`, modsListener);
-                if (data && data.mods)
-                    setModsForCurrentApp(data.mods);
-            }
+					const obj = ({ header: header, body: body, footer: footer });
+					setMessage(obj);
+				}
+				else {
+					const header = <div className="tooltip-header">
+						<p className="tooltip-title">{message.name}</p>
+					</div>
 
-            window.electron.on(`mods-${selectedApp.id}`, modsListener)
-            return () => {
-                window.electron.removeListener(`mods-${selectedApp.id}`, modsListener);
-            }
-        }
+					const body = <div className="tooltip-body">
+						<p>{message.message}</p>
+					</div>
 
-    }, [ selectedApp ])
+					const footer = <div className="tooltip-footer">
+						<button className="btn tooltip-btn" onClick={hideTooltip}>OK</button>
+					</div>
+					const obj = ({ header: header, body: body, footer: footer });
+					setMessage(obj);
+				}
+			}
 
-    /* Library */
-    useEffect(() => {
-        const getJsonData = async () => {
-            const data = await window.electron.getJsonData();
-            if (data && data.games) {
-                setGames(data.games);
-                setLibraryDirectory(data.games_path);
-                setShadPS4Location(data.shadPS4Exe);
-                setModsDirectory(data.mods_path);
-                setUpdated(true);
-            }
-        };
-        if (!updated) {
-            getJsonData();
-        }
-    }, [ updated ]);
+			return () => {
+				window.electron.removeListener('message');
+			}
+		})
+	}, [])
 
-    /* Open Modal */
-    useEffect(() => {
-        const handleMods = (event, data) => {
-            setInstalledMods(data.mods);
-            setEnabledMods(data.enabled);
-            setDisabledMods(data.disabled);
-        }
-        window.electron.on('mod-data', handleMods);
-        return () => { window.electron.removeListener('mod-data', handleMods); };
-    }, [ enabledMods ])
+	/* Set available mods and fetch their current states for selected app from IPC */
+	useEffect(() => {
+		if (selectedApp && selectedApp.id) {
+			/* Send request to */
+			window.electron.send(`get-mods-directory`, selectedApp.id)
+			window.electron.send('mod-state', selectedApp.id);
 
-    /* Modal */
-    useEffect(() => {
-        if (selectedApp) {
-            const modalHeader = (
-                <>
-                    <div className="modal-header-wrapper">
-                        <div className="app-item">
-                            <code>{selectedApp.path}</code>
-                            <button className="btn bold reveal-btn" onClick={() => { revealInExplorer(selectedApp.path) }}><IoIosFolderOpen /></button>
-                        </div>
-                        <code className="modal-title">{selectedApp.title}</code>
-                    </div>
-                </>
-            )
+			const modsDirectoryListener = (event, data) => {
+				window.electron.removeListener(`mods-${selectedApp.id}`, modsDirectoryListener);
+				if (data && data.mods) {
+					setModsForCurrentApp(data.mods);
+				}
+			}
+			const modsStateListener = (event, data) => {
+				if (data) {
+					console.log(data);
+				}
+			}
+			/* Response from IPC from fetch request */
+			window.electron.on(`check-mods`, modsStateListener)
+			window.electron.on(`mods-${selectedApp.id}`, modsDirectoryListener)
+			/* Remove listeners after they've been attached */
+			return () => {
+				window.electron.on(`check-mods`, modsStateListener)
+				window.electron.removeListener(`mods-${selectedApp.id}`, modsDirectoryListener);
+			}
+		}
+	}, [ selectedApp ])
 
-            const modalBody = (
-                <div className="modal-body-wrapper">
-                    <div className="app-mods-wrapper">
-                        <button className="btn bold play-btn" onClick={() => { bootGame() }}>Launch {selectedApp.title}</button>
-                        <ul className="mods-list">
-                            {Array.isArray(modsForCurrentApp) && modsForCurrentApp.length > 0 ? modsForCurrentApp.map(mod => {
-                                const isModEnabled = enabledMods && enabledMods.find(x => x.modName === mod) ? true : false;
-                                return (
-                                    <div className="mod-item-group">
-                                        <li className="mod-item">{mod}</li>
-                                        <ToggleButton checked={isModEnabled} onClick={() => {
-                                            if (!isModEnabled)
-                                                enableMod({ modName: mod, id: selectedApp.id })
-                                            else disableMod({ modName: mod, id: selectedApp.id });
-                                        }} />
-                                    </div>
-                                )
-                            }) : null}
-                        </ul>
-                    </div>
-                </div>
-            )
+	/* Library */
+	useEffect(() => {
+		const getJsonData = async () => {
+			const data = await window.electron.getJsonData();
+			if (data && data.games) {
+				setGames(data.games);
+				setLibraryDirectory(data.games_path);
+				setShadPS4Location(data.shadPS4Exe);
+				setModsDirectory(data.mods_path);
+				setUpdated(true);
+			}
+		};
+		if (!updated) {
+			getJsonData();
+		}
+	}, [ updated ]);
 
-            const modalFooter = (
-                <div className="modal-footer-wrapper">
-                    <button className="btn modal-close" onClick={closeModal}>OK</button>
-                </div>
-            )
+	useEffect(() => {
+		if (selectedApp) {
+			const getModStates = async () => {
+				const data = await window.electron.getModStates(selectedApp);
+				if (data && data.mods) {
+					const enabledMods = [];
+					const disabledMods = [];
+					Object.values(data.mods).forEach(mod => {
+						if (mod.enabled)
+							enabledMods.push(mod);
+						else disabledMods.push(mod);
+					})
 
-            const modalBackdrop = (
-                <div className="modal-backdrop" onClick={closeModal}></div>
-            )
+					setEnabledMods(enabledMods);
+					setDisabledMods(disabledMods);
+				}
+			}
+			getModStates();
+		}
+	}, [ selectedApp ]);
 
-            setModalContent({
-                header: modalHeader,
-                body: modalBody,
-                footer: modalFooter,
-                backdrop: modalBackdrop
-            })
+	/* Open Modal */
+	useEffect(() => {
+		const updateModData = (event, data) => {
+			const setData = async () => {
+				setInstalledMods(data.mods);
+				setEnabledMods(data.enabled);
+				setDisabledMods(data.disabled);
+			}
+			const update = async () => {
+				await setData();
+			}
+			update();
+		};
 
-            requestModsForApp(selectedApp);
-        }
-    }, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods, installedMods, modalOpen ])
+		window.electron.on('mod-state', updateModData);
+		return () => {
+			window.electron.removeListener('mod-state', updateModData)
+		};
+	}, [ selectedApp, enabledMods, disabledMods, installedMods, modalOpen ]);
 
-    /* Refresh Games */
-    useEffect(() => {
-        const handleGamesUpdated = (event, data) => {
-            setGames(data.games);
-            setUpdated(true);
-        };
+	/* Initialize Modal Structure */
+	useEffect(() => {
+		if (selectedApp) {
+			const modalHeader = (
+				<>
+					<div className="modal-header-wrapper">
+						<div className="app-item">
+							<code>Game Directory:</code>
+							<button className="btn bold reveal-btn" onClick={() => { revealInExplorer(selectedApp, 'game') }}><IoIosFolderOpen /></button>
+							<code>Mods Directory:</code>
+							<button className="btn bold reveal-btn" onClick={() => { revealInExplorer(selectedApp, 'mod') }}><IoIosFolderOpen /></button>
+						</div>
+						<code className="modal-title">{selectedApp.title}</code>
+					</div>
+				</>
+			)
+			const modalBody = (
+				<div className="modal-body-wrapper">
+					<div className="app-mods-wrapper">
+						{Array.isArray(modsForCurrentApp) && modsForCurrentApp.length > 0 ? (
+							<>
+								<p className="mods-title">Mods available</p>
+								<ul className="mods-list">
+									{modsForCurrentApp.map(mod => {
+										const isModEnabled = enabledMods && enabledMods.find(x => x.modName === mod) ? true : false;
+										return (
+											<>
+												<div className="mod-item-group">
+													<li className="mod-item">{mod}</li>
+													<ToggleButton checked={isModEnabled} onClick={() => {
+														if (!isModEnabled)
+															enableMod({ modName: mod, id: selectedApp.id })
+														else disableMod({ modName: mod, id: selectedApp.id });
+													}} />
+												</div>
+												<div className="mod-divider"></div>
+											</>);
+									})}
+								</ul>
+							</>
+						) : (
+							<div className="mods-text-wrapper">
+								<p className="mods-text">No mods are currently installed</p>
+								<FaFaceFrown size={30} />
+							</div>
+						)}
 
-        window.electron.on('games-updated', handleGamesUpdated);
-        return () => { window.electron.removeListener('games-updated', handleGamesUpdated); };
-    }, []);
+					</div>
+					<div className="app-details-wrapper">
+						<button className="btn bold play-btn" onClick={() => { bootGame() }}>Launch {selectedApp.title}</button>
+						<div className="app-poster-wrapper">
+							<img src={selectedApp.icon} alt="game-icon" className="app-poster" />
+						</div>
+						<div className="game-details-wrapper">
+							<div className="game-detail">
+								<p className="game-title">{selectedApp.title}</p>
+							</div>
+							<div className="game-detail">
+								<p>ID:</p>
+								<p>{selectedApp.id}</p>
+							</div>
+							{Array.isArray(modsForCurrentApp) ?
+								(<div className="game-detail">
+									<p>Total mods:</p>
+									<p>{modsForCurrentApp.length}</p>
+								</div>) :
+								(<div className="game-detail">
+									<p>No mods installed</p>
+								</div>)}
+							{enabledMods && Array.isArray(modsForCurrentApp) ? (
+								<div className="game-detail">
+									<p>Enabled Mods:</p>
+									<p>{enabledMods.length}</p>
+								</div>) : null}
+							{disabledMods && Array.isArray(modsForCurrentApp) ? (
+								<div className="game-detail">
+									<p>Disabled Mods:</p>
+									<p>{disabledMods.length}</p>
+								</div>) : null}
+						</div>
+					</div>
+				</div>
+			)
+			const modalFooter = (
+				<div className="modal-footer-wrapper">
+					<button className="btn modal-close" onClick={closeModal}>OK</button>
+				</div>
+			)
+			const modalBackdrop = (
+				<div className="modal-backdrop" onClick={closeModal}></div>
+			)
+			setModalContent({
+				header: modalHeader,
+				body: modalBody,
+				footer: modalFooter,
+				backdrop: modalBackdrop
+			})
+		}
+	}, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods ])
 
-    return (
-        <>
-            <Modal content={modalContent} show={modalOpen} />
-            {!games || games?.length === 0 ?
-                <div className="dialog-wrapper">
-                    <p className="message">No games library found</p>
-                    <button className="btn initialize" onClick={initializeLibrary}>Select Games Directory</button>
-                </div>
-                : <GamesWrapper content={games} select={handleSelectedApp} />
-            }
-        </>
-    )
+	/* Refresh Games */
+	useEffect(() => {
+		const handleGamesUpdated = (event, data) => {
+			setGames(data.games);
+			setUpdated(true);
+		};
+
+		window.electron.on('games-updated', handleGamesUpdated);
+		return () => { window.electron.removeListener('games-updated', handleGamesUpdated); };
+	}, []);
+
+	useEffect(() => {
+		console.log(enabledMods);
+	}, [ enabledMods ])
+
+	return (
+		<>
+			<Modal content={modalContent} show={modalOpen} />
+			{!games || games?.length === 0 ?
+				<div className="dialog-wrapper">
+					<p className="message">No games library found</p>
+					<button className="btn initialize" onClick={initializeLibrary}>Select Games Directory</button>
+				</div>
+				: <GamesWrapper content={games} select={handleSelectedApp} />
+			}
+		</>
+	)
 }
 
 export default Install;

@@ -5,7 +5,11 @@
     background-color: gray;
     position: relative;
     cursor: pointer;
-    transition: background-color 250ms ease;
+    transition: 250ms ease;
+}
+.toggle-btn:hover{
+    box-shadow: 0 0 15px 5px var(--secondary-color);
+    outline: 1px solid white;
 }
 
 .thumb {
@@ -28,3 +32,4 @@
 .toggle-btn.toggled .thumb {
     transform: translateX(calc(60px - 25px));
 }
+

@@ -7,13 +7,6 @@
     align-self: center;
 }
 
-.card-wrapper>* {
-    margin: 0;
-    padding: 0;
-    position: relative;
-    gap: 0;
-}
-
 .library-wrapper {
     position: absolute;
     display: grid;
@@ -34,14 +27,14 @@
 
 .card-wrapper {
     position: relative;
-    margin: 0;
-    padding: 0;
     width: 200px;
-    height: auto;
     transition: 250ms ease;
     box-shadow: 0 0px 12px black;
     margin-bottom: 50px;
     margin-top: 50px;
+    gap: 0px;
+    display: flex;
+    flex-direction: column;
 }
 
 .card-wrapper::before {
@@ -66,11 +59,14 @@
 }
 
 .card-poster {
+    position: relative;
+    height: 200px;
+}
+
+.card-poster-img {
+    position: relative;
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    clip-path: 0 0 0 0;
-    overflow: hidden;
 }
 
 .card-reflection {
@@ -97,33 +93,19 @@
 .card-wrapper:hover .card-reflection::after {
     height: 150%;
     width: 110%;
-    opacity: 0.7;
+    opacity: 0.9;
 }
 
 .card-footer {
     position: relative;
-    background-color: rgba(31, 32, 36, 0.97);
+    background-color: rgba(0, 0, 0, 0.97);
     height: 80px;
     color: rgb(255, 255, 255);
     text-align: center;
     display: flex;
     justify-content: center;
     align-items: center;
-    top: 0;
-    margin: 0;
-}
-
-
-
-.icon-footer {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    position: absolute;
-    z-index: -1;
-    transform: rotateX(180deg);
-    overflow: hidden;
-    opacity: 1;
+    bottom: 0;
 }
 
 .btn.initialize {
