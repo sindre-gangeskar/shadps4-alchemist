@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useEffect, useState } from "react";
 import '../css/Install.css';
 import useGlobalStateStore from "../js/globalStateStore";
@@ -24,10 +24,23 @@ function Install() {
 	const [ type, setType ] = useGlobalStateStore(state => [ state.type, state.setType ]);
 	const [ tooltipVisible, setToolTipVisible ] = useGlobalStateStore(state => [ state.tooltipVisible, state.setToolTipVisible ]);
 
+	/* Settings */
+	const [ fullscreen, setFullscreen ] = useGlobalStateStore(state => [ state.fullscreen, state.setFullscreen ]);
+	const [ isPS4Pro, setIsPS4Pro ] = useGlobalStateStore(state => [ state.isPS4Pro, state.setIsPS4Pro ]);
+	const [ showSplash, setShowSplash ] = useGlobalStateStore(state => [ state.showSplash, state.setShowSplash ]);
+	const [ vBlankDivider ] = useGlobalStateStore(state => [ state.VBlankDivider ]);
+	const [ screenWidth, setScreenWidth ] = useGlobalStateStore(state => [ state.screenWidth, state.setScreenWidth ]);
+	const [ screenHeight, setScreenHeight ] = useGlobalStateStore(state => [ state.screenHeight, state.setScreenHeight ]);
+	const [ logType, setLogType ] = useGlobalStateStore(state => [ state.logType ]);
+
 	const [ modsForCurrentApp, setModsForCurrentApp ] = useState(null);
 	const [ enabledMods, setEnabledMods ] = useState([]);
 	const [ disabledMods, setDisabledMods ] = useState([]);
 	const [ installedMods, setInstalledMods ] = useState([]);
+
+	const heightSettingRef = useRef(null);
+	const widthSettingRef = useRef(null);
+	const vBlankDividerRef = useRef(null);
 
 	const initializeLibrary = () => {
 		window.electron.send('open-file-dialog');
@@ -38,7 +51,20 @@ function Install() {
 	}
 
 	const bootGame = () => {
-		window.electron.send('launch-game', `${selectedApp.path}/eboot.bin`);
+		let width = widthSettingRef.current.value;
+		let height = heightSettingRef.current.value;
+		window.electron.send('launch-game', ({
+			bin: `${selectedApp.path}/eboot.bin`,
+			fullscreen: fullscreen,
+			showSplash: showSplash,
+			screenWidth: width || screenWidth,
+			screenHeight: height || screenHeight,
+			vBlankDivider: vBlankDivider,
+			logType: logType,
+			isPS4Pro: isPS4Pro
+		}));
+
+		console.log(heightSettingRef.current.value, widthSettingRef.current.value);
 	}
 
 	const revealInExplorer = (app, type) => {
@@ -64,8 +90,20 @@ function Install() {
 	const disableMod = (data) => {
 		window.electron.send('disable-mod', ({ modName: data.modName, id: data.id }));
 	}
+
 	const refreshLibrary = () => {
 		window.electron.send('fetch-games-in-library');
+	}
+
+	const toggleValue = (value, setState) => {
+		value = !value;
+		setState(value);
+	}
+
+	const toggleLogType = (logType, setLogType) => {
+		if (logType === "async")
+			setLogType("sync")
+		else setLogType("async");
 	}
 
 	/* Set tooltip error messages */
@@ -141,19 +179,6 @@ function Install() {
 		window.electron.on('refresh-library', handleLibraryRefresh);
 		return () => { window.electron.removeListener('refresh-games', handleLibraryRefresh) }
 	}, [])
-
-	/* 
-	
-			const handleGamesUpdated = (event, data) => {
-				setGames(data.games);
-				setUpdated(true);
-			};
-	
-			window.electron.on('games-updated', handleGamesUpdated);
-			return () => { window.electron.removeListener('games-updated', handleGamesUpdated); };
-	
-	*/
-
 
 	/* Set available mods and fetch their current states for selected app from IPC */
 	useEffect(() => {
@@ -277,7 +302,6 @@ function Install() {
 														else disableMod({ modName: mod, id: selectedApp.id });
 													}} />
 												</div>
-												<div className="mod-divider"></div>
 											</>);
 									})}
 								</ul>
@@ -285,17 +309,55 @@ function Install() {
 						) : (
 							<div className="mods-text-wrapper">
 								<p className="mods-text">No mods are currently installed</p>
-								<FaFaceFrown size={30} />
+								<FaFaceFrown size={20} />
 							</div>
 						)}
 
 					</div>
+					<div className="divider vertical"></div>
+					<div className="app-settings-wrapper">
+						<p className="settings-title">Global Settings</p>
+						<p className="category">Emulator</p>
+						<div className="setting-item">
+							<p>PS4 Pro Mode</p>
+							<ToggleButton onClick={() => { toggleValue(isPS4Pro, setIsPS4Pro) }} checked={isPS4Pro} />
+						</div>
+						<div className="setting-item">
+							<p>Fullscreen</p>
+							<ToggleButton onClick={() => { toggleValue(fullscreen, setFullscreen) }} checked={fullscreen} />
+						</div>
+						<div className="setting-item">
+							<p>Show Splash</p>
+							<ToggleButton onClick={() => { toggleValue(showSplash, setShowSplash) }} checked={showSplash} />
+						</div>
+						<p className="category">Graphics</p>
+						<div className="setting-item">
+							<p>Screen Width:</p>
+							<input ref={widthSettingRef} type="text" className="input setting-input" placeholder={`Current: ${screenWidth}`} onChange={e => {setScreenWidth(e.target.value)}} />
+						</div>
+						<div className="setting-item">
+							<p>Screen Height:</p>
+							<input ref={heightSettingRef} type="text" className="input setting-input" placeholder={`Current: ${screenHeight}`} onChange={e => setScreenHeight(e.target.value)} />
+						</div>
+						<div className="setting-item">
+							<p>Vblank Divider</p>
+							<input ref={vBlankDividerRef} type="number" placeholder="1" className="input setting-input" min={0} max={10} defaultValue={vBlankDivider} />
+						</div>
+						<p className="category">Logger</p>
+						<div className="setting-item">
+							<p>Enable Async</p>
+							<ToggleButton onClick={() => { toggleLogType(logType, setLogType) }} checked={logType === "async" ? true : false} />
+						</div>
+					</div>
+					<div className="divider vertical"></div>
 					<div className="app-details-wrapper">
-						<button className="btn bold play-btn" onClick={() => { bootGame() }}>Launch {selectedApp.title}</button>
 						<div className="app-poster-wrapper">
 							<img src={selectedApp.icon} alt="game-icon" className="app-poster" />
 						</div>
+
 						<div className="game-details-wrapper">
+							<button className="btn bold play-btn" onClick={() => { bootGame() }}>Launch {selectedApp.title}</button>
+
 							<div className="game-detail">
 								<p className="game-title">{selectedApp.title}</p>
 							</div>
@@ -340,7 +402,9 @@ function Install() {
 				backdrop: modalBackdrop
 			})
 		}
-	}, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods ])
+	}, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods, fullscreen, showSplash, logType, isPS4Pro, vBlankDivider ])
+
+
 
 	/* Refresh Games */
 	useEffect(() => {
@@ -352,10 +416,6 @@ function Install() {
 		window.electron.on('games-updated', handleGamesUpdated);
 		return () => { window.electron.removeListener('games-updated', handleGamesUpdated); };
 	}, []);
-
-	useEffect(() => {
-		console.log(enabledMods);
-	}, [ enabledMods ])
 
 	return (
 		<>

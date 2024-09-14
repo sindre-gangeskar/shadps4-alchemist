@@ -9,16 +9,31 @@ const useGlobalStateStore = create(set => ({
     tooltipContent: null,
     tooltipVisible: false,
     processActive: false,
-    
-    setMessage: value => set(() => ({ message: value })),
-    setError: value => set(() => ({ error: value })),
-    setType: value => set(() => ({ type: value })),
-    setToolTipContent: value => set(() => ({ tooltipContent: value })),
-    setToolTipVisible: value => set(() => ({ tooltipVisible: value })),
-    setLibraryDirectory: value => set(() => ({ libraryDirectory: value })),
-    setShadPS4Location: value => set(() => ({ shadPS4Location: value })),
-    setModsDirectory: value => set(() => ({ modsDirectory: value })),
-    setProcessActive: value => set(() => ({ processActive: value }))
-}))
+    fullscreen: false,
+    isPS4Pro: false,
+    showSplash: false,
+    screenWidth: 1280,
+    screenHeight: 720,
+    vBlankDivider: 1,
+    logType: "async",
+
+    // Simplified setters
+    setMessage: message => set({ message }),
+    setError: error => set({ error }),
+    setType: type => set({ type }),
+    setFullscreen: fullscreen => set({ fullscreen }),
+    setToolTipContent: tooltipContent => set({ tooltipContent }),
+    setToolTipVisible: tooltipVisible => set({ tooltipVisible }),
+    setLibraryDirectory: libraryDirectory => set({ libraryDirectory }),
+    setShadPS4Location: shadPS4Location => set({ shadPS4Location }),
+    setModsDirectory: modsDirectory => set({ modsDirectory }),
+    setProcessActive: processActive => set({ processActive }),
+    setIsPS4Pro: isPS4Pro => set({ isPS4Pro }),
+    setShowSplash: showSplash => set({ showSplash }),
+    setScreenWidth: screenWidth => set({ screenWidth }),
+    setScreenHeight: screenHeight => set({ screenHeight }),
+    setVBlankDivider: vBlankDivider => set({ vBlankDivider }),  // Fixed typo from VBlankProvider to VBlankDivider
+    setLogType: logType => set({ logType })
+}));
 
 export default useGlobalStateStore;

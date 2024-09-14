@@ -58,6 +58,7 @@
     color: rgb(255, 255, 255);
     font-weight: bolder;
     align-items: center;
+    justify-content: space-around;
 }
 
 .modal-footer-wrapper {
@@ -115,6 +116,7 @@
     text-overflow: ellipsis;
     outline: 1px solid rgba(255, 255, 255, 0);
     padding: 15px;
+    margin: 10px auto;
 }
 
 .play-btn:hover {
@@ -122,16 +124,15 @@
 }
 
 .mods-list {
-    height: 400px;
-    width: 500px;
+    height: 100%;
+    width: 100%;
     list-style: none;
     margin: 0px auto;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: top;
     align-items: center;
-    letter-spacing: 3px;
-    font-size: 0.8rem;
+    font-size: 1rem;
     overflow-y: auto;
 }
 
@@ -145,7 +146,7 @@
     overflow: visible;
 }
 
-.mods-list::-webkit-scrollbar-thumb{
+.mods-list::-webkit-scrollbar-thumb {
     background-color: var(--tertiary-primary);
     border-radius: 1.5rem;
 }
@@ -155,10 +156,11 @@
     text-overflow: ellipsis;
     text-wrap: nowrap;
     overflow: hidden;
+    font-weight: normal;
 }
 
 .mod-item-group {
-    width: 80%;
+    width: 90%;
     align-items: center;
     display: flex;
     justify-content: space-between;
@@ -179,22 +181,22 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 20px;
     background: none;
 }
 
 .game-details-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 10px;
     font-family: monospace;
     letter-spacing: 0cap;
     justify-content: center;
     flex: 1;
-    text-align: start;
     font-family: 'JetBrains Mono';
     letter-spacing: 2px;
-    width: 80%;
+    max-width: 300px;
+    width: 100%;
+    min-width: 100px;
 }
 
 .game-detail {
@@ -205,8 +207,8 @@
     text-wrap: nowrap;
 }
 
-.game-detail > .game-title{
-    margin: 0px auto;
+.game-detail>.game-title {
+    margin: 15px auto;
     font-weight: bolder;
 }
 
@@ -215,19 +217,21 @@
 }
 
 .app-poster {
-    width: 60%;
+    max-width: 250px;
+    width: 100%;
     margin-top: 50px;
     box-shadow: 0px 5px 30px var(--shadow);
-    flex: 1;
+    min-width: 80px;
 }
 
 .app-mods-wrapper {
     position: relative;
-    flex: 1;
-    justify-content: center;
-    align-items: center;
+    justify-content: top;
+    align-items: top;
     display: flex;
     flex-direction: column;
+    height: 100%;
+    width: 400px;
 }
 
 .mods-text-wrapper {
@@ -237,17 +241,92 @@
     align-items: center;
     justify-content: center;
     gap: 15px;
+    height: 100%;
 }
 
 .mods-text {
-    font-size: 1.5rem;
+    font-size: 1rem;
+    font-weight: normal;
 }
 
 .mods-title {
-    font-weight: bolder;
-    font-family: 'JetBrains Mono';
     text-align: center;
-    letter-spacing: 4px;
+    margin: 10px auto;
+}
+
+.app-settings-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+    justify-content: top;
+    height: 100%;
+    margin: 10px;
+    align-items: center;
+    align-content: center;
+    font-size: 1rem;
+}
+
+.setting-item {
+    padding: 5px;
+    display: flex;
+    flex-direction: row;
+    font-weight: lighter;
+    justify-content: space-between;
+    width: 100%;
+    align-items: center;
+}
+
+.settings-title {
+    text-align: center;
+    margin: 15px auto;
+}
+
+.setting-input {
+    width: 100px;
+    max-width: 125px;
+    flex: 1;
+    padding: 15px;
+    background-color: var(--shadow);
+    outline: none;
+    border: none;
+    margin: 0px 15px;
+    font-size: 1rem;
+    color: var(--secondary-color);
+    text-align: end;
+}
+
+.setting-input::placeholder {
+    font-size: 0.9rem;
+}
+
+.setting-input.number {
+    width: fit-content !important;
+}
+
+.setting-input[type="number"]::-webkit-outer-spin-button,
+.setting-input[type="number"]::-webkit-inner-spin-button {
+    margin: 0px;
+    -webkit-appearance: none;
+}
+
+
+.divider.horizontal {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(to right, #00000000, var(--secondary-color), #00000000 95%);
+}
+
+.divider.vertical {
+    width: 1px;
+    height: 100%;
+    background: linear-gradient(to top, #00000000, var(--secondary-color), #00000000 95%);
+}
+
+.category {
+    margin: 15px auto;
+    padding: 10px;
+    width: 100%;
+    font-weight: lighter;
 }
 
 @keyframes scaleOut {

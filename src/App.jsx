@@ -19,6 +19,16 @@ function App() {
   const [ setProcessActive ] = useGlobalStateStore(state => [ state.setProcessActive ])
   const [ tooltipContent, setToolTipContent ] = useGlobalStateStore(state => [ state.tooltipContent, state.setToolTipContent ]);
   const [ tooltipVisible, setToolTipVisible ] = useGlobalStateStore(state => [ state.tooltipVisible, state.setToolTipVisible ]);
+
+  /* Settings */
+  const [ setFullscreen ] = useGlobalStateStore(state => [ state.setFullscreen ]);
+  const [ setIsPS4Pro ] = useGlobalStateStore(state => [ state.setIsPS4Pro ]);
+  const [ setShowSplash ] = useGlobalStateStore(state => [ state.setShowSplash ]);
+  const [ setVBlankDivider ] = useGlobalStateStore(state => [ state.setVBlankDivider ]);
+  const [ screenWidth, setScreenWidth ] = useGlobalStateStore(state => [ state.screenWidth, state.setScreenWidth ]);
+  const [ screenHeight, setScreenHeight ] = useGlobalStateStore(state => [ state.screenHeight, state.setScreenHeight ]);
+  const [ setLogType ] = useGlobalStateStore(state => [ state.setLogType ]);
+
   var errorObj = {};
   var messageObj = {};
   const navigate = useNavigate();
@@ -88,6 +98,29 @@ function App() {
 
   }, [ tooltipContent, type ])
 
+/* Update Global Settings */
+  useEffect(() => {
+    const handleSettingsListener = (event, data) => {
+      console.log('Received Data:', data)
+      if (data) {
+        setVBlankDivider(data.GPU.vblankDivider);
+        setScreenWidth(data.GPU.screenWidth);
+        setScreenHeight(data.GPU.screenHeight);
+        setFullscreen(data.General.Fullscreen);
+        setIsPS4Pro(data.General.isPS4Pro);
+        setLogType(data.General.logType);
+        setShowSplash(data.General.showSplash);
+      }
+    }
+    window.electron.send('get-settings');
+    window.electron.on('get-settings', handleSettingsListener);
+    return (() => { window.electron.removeListener('get-settings', handleSettingsListener) });
+  }, [])
+
+  useEffect(() => {
+    setScreenWidth(screenWidth);
+    setScreenHeight(screenHeight);
+  }, [ screenWidth, screenHeight ])
   return (
     <>
       <TitleBar />

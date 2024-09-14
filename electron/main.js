@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
+import toml from '@iarna/toml';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -17,6 +18,7 @@ if (!fs.existsSync(path.join(__dirname, '..', 'data')))
 
 /* Electron Initialization */
 app.whenReady().then(createWindow);
+
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin')
         app.quit();
@@ -25,7 +27,6 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0)
         createWindow();
 })
-
 
 ipcMain.on('open-file-dialog', async (event) => {
     const exists = fs.existsSync(`${dataFilePath}/config.json`)
@@ -146,16 +147,31 @@ ipcMain.on('open-in-explorer', async (event, data) => {
         console.error(error);
     }
 })
-ipcMain.on('launch-game', async (event, bin) => {
+ipcMain.on('launch-game', async (event, data) => {
     try {
         const config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'config.json')));
         const shadPS4Exe = config.shadPS4Exe;
         const shadPS4Dir = path.dirname(shadPS4Exe);
+        const shadPS4ConfigFilePath = path.join(shadPS4Dir, 'user', 'config.toml');
+        const shadPS4ConfigFile = fs.readFileSync(shadPS4ConfigFilePath);
+        const shadPS4ConfigData = toml.parse(shadPS4ConfigFile);
 
-        const shadPS4Process = spawn(shadPS4Exe, [ bin ], {
+        shadPS4ConfigData.General.Fullscreen = data.fullscreen;
+        shadPS4ConfigData.General.isPS4Pro = data.isPS4Pro;
+        shadPS4ConfigData.General.showSplash = data.showSplash;
+        shadPS4ConfigData.General.logType = data.logType;
+        shadPS4ConfigData.GPU.vBlankProvider = +data.vBlankProvider;
+        shadPS4ConfigData.GPU.screenHeight = +data.screenHeight;
+        shadPS4ConfigData.GPU.screenWidth = +data.screenWidth;
+
+        console.log({ width: shadPS4ConfigData.GPU.screenWidth, height: shadPS4ConfigData.GPU.screenHeight });
+        let tomlString = toml.stringify(shadPS4ConfigData);
+        fs.writeFileSync(shadPS4ConfigFilePath, tomlString);
+
+        const shadPS4Process = spawn(shadPS4Exe, [ data.bin ], {
             cwd: shadPS4Dir,
             stdio: 'ignore',
-            detached: true
+            detached: false
         })
 
         shadPS4Process.on('error', err => {
@@ -168,8 +184,6 @@ ipcMain.on('launch-game', async (event, bin) => {
         })
 
         event.sender.send('shadPS4-process', { processStatus: 'active' })
-
-        /*   shadPS4Process.unref(); */
     } catch (error) {
         console.error('An error occurred while trying to launch game', error);
     }
@@ -249,6 +263,20 @@ ipcMain.on('disable-mod', async (event, data) => {
     } catch (error) {
         console.error(error);
         return sendError(event, 'An error occurred while trying to disable mod', 'UnknownError', 500);
+    }
+})
+ipcMain.on('get-settings', async (event) => {
+    try {
+        console.log(event);
+        const config = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
+        const shadPS4Dir = path.dirname(config.shadPS4Exe);
+        console.log(shadPS4Dir);
+        const shadPS4Config = fs.readFileSync(path.join(shadPS4Dir, 'user', 'config.toml'));
+        const shadPS4ConfigData = toml.parse(shadPS4Config);
+
+        event.sender.send('get-settings', shadPS4ConfigData);
+    } catch (error) {
+        console.error(error);
     }
 })
 /* Client Handling */
@@ -389,7 +417,7 @@ function enableModForGame(fullGamePath, mod, modName, appId, event) {
                 console.log(mod);
                 const matchingOriginalFile = original.find(original =>
                     original.path === mod.path && original.file === mod.file);
-                
+
                 console.log(matchingOriginalFile)
                 if (matchingOriginalFile) {
                     const modPath = path.join(mod.fullPath, mod.file);
