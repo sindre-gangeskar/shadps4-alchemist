@@ -511,7 +511,7 @@ function createWindow() {
     })
 
     isDev ? win.loadURL('http://localhost:3000') :
-        win.loadFile(path.join(__dirname, '..', 'public', 'index.html'));
+        win.loadFile(__dirname, '../build/index.html');
 }
 function readUInt(buffer, offset, length) {
     if (length === 1) return buffer.readUInt8(offset);

@@ -1,7 +1,7 @@
 {
   "name": "shadps4-mod-manager-js",
   "version": "0.1.0",
-  "main": "./electron/main.js",
+  "main": "electron/main.js",
   "type": "module",
   "private": true,
   "dependencies": {
@@ -10,7 +10,6 @@
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
     "concurrently": "^9.0.0",
-    "electron": "^32.0.1",
     "electron-is-dev": "^3.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -25,11 +24,23 @@
   },
   "scripts": {
     "start": "cross-env BROWSER=none react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
+    "build-react": "react-scripts build",
+    "build-electron": "electron-builder",
     "electron": "electron .",
     "dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && npm run electron\""
+  },
+  "build": {
+    "appId": "shadps4-mod-manager",
+    "productName": "ShadPS4 Bridge",
+    "files": [
+      "electron/**/*",
+      "data/**/*",
+      "build/**/*"
+    ],
+    "directories": {},
+    "extraMetadata": {
+      "main": "./electron/main.js"
+    }
   },
   "eslintConfig": {
     "extends": [
@@ -52,6 +63,8 @@
   "devDependencies": {
     "@babel/plugin-proposal-optional-chaining": "^7.21.0",
     "cross-env": "^7.0.3",
+    "electron": "^32.0.1",
+    "electron-builder": "^25.0.5",
     "electron-reload": "^2.0.0-alpha.1"
   }
 }
