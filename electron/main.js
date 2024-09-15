@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import isDev from 'electron-is-dev';
 import path from 'path';
-import fs from 'fs';
+import fs, { unlinkSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 import toml from '@iarna/toml';
@@ -27,6 +27,7 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0)
         createWindow();
 })
+
 
 ipcMain.on('open-file-dialog', async (event) => {
     const exists = fs.existsSync(`${dataFilePath}/config.json`)
@@ -220,18 +221,22 @@ ipcMain.on('enable-mod', async (event, data) => {
 
         /* Get files from mod, and enable them */
         const filesInMod = getFilesInMod(absoluteModsPath, mod.modName);
-        await enableModForGame(initialData.gameDir, filesInMod, mod.modName, data.id, event)
+        const success = await enableModForGame(initialData.gameDir, filesInMod, mod.modName, data.id, event)
 
-        /* Parse mods config file for said game */
-        const fileData = JSON.parse(fs.readFileSync(initialData.modConfigPath, 'utf-8'));
+        if (success) {
+            /* Parse mods config file for said game */
+            const fileData = JSON.parse(fs.readFileSync(initialData.modConfigPath, 'utf-8'));
 
-        if (!fileData.mods[ data.modName ])
-            fileData.mods[ data.modName ] = mod;
-        else fileData.mods[ data.modName ].enabled = true;
+            if (!fileData.mods[ data.modName ])
+                fileData.mods[ data.modName ] = mod;
+            else fileData.mods[ data.modName ].enabled = true;
 
-        const mods = getAllMods(fileData);
-        saveConfig(fileData, initialData.modConfigPath);
-        event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
+            const mods = getAllMods(fileData);
+            saveConfig(fileData, initialData.modConfigPath);
+            sendMessage(event, data.modName, 'Successfully Enabled Mod', 200, 'success');
+            event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
+        }
+        else sendMessage(event, `Trying to activate: ${data.modName}`, `Conflict detected: file is already in use by another mod. Disable conflicting mod and retry`, 200, 'error');
     } catch (error) {
         console.error(error);
         sendError(event, 'An error has occurred while enabling enabling mod', 'EnableModErr', 500);
@@ -250,16 +255,20 @@ ipcMain.on('disable-mod', async (event, data) => {
         const absoluteModsPath = `${initialData.modsDir}/${mod.modName}`;
 
         const filesInMod = getFilesInMod(absoluteModsPath, mod.modName);
-        disableModForGame(initialData.gameDir, filesInMod, mod.modName, data.id, event)
+        const success = disableModForGame(initialData.gameDir, filesInMod, mod.modName, data.id, event)
 
-        /* If Mod does not exist in file - add it */
-        if (!fileData.mods[ data.modName ])
-            fileData.mods[ data.modName ] = mod;
-        else fileData.mods[ data.modName ].enabled = false;
+        if (success) {
+            /* If Mod does not exist in file - add it */
+            if (!fileData.mods[ data.modName ])
+                fileData.mods[ data.modName ] = mod;
+            else fileData.mods[ data.modName ].enabled = false;
 
-        const mods = getAllMods(fileData)
-        saveConfig(fileData, initialData.modConfigPath);
-        event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
+            const mods = getAllMods(fileData)
+            saveConfig(fileData, initialData.modConfigPath);
+            sendMessage(event, data.modName, 'Successfully Disabled Mod', 200, 'success');
+            event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
+        }
+        else sendError(event, 'An error occurred while attempting to disable mod', 'UnknownDisableErr', 500);
     } catch (error) {
         console.error(error);
         return sendError(event, 'An error occurred while trying to disable mod', 'UnknownError', 500);
@@ -267,7 +276,6 @@ ipcMain.on('disable-mod', async (event, data) => {
 })
 ipcMain.on('get-settings', async (event) => {
     try {
-        console.log(event);
         const config = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
         const shadPS4Dir = path.dirname(config.shadPS4Exe);
         console.log(shadPS4Dir);
@@ -397,47 +405,55 @@ function getGameRootDir(fullGamePath, appId, originalFiles, filesToLink) {
     }
 
 }
-function enableModForGame(fullGamePath, mod, modName, appId, event) {
+async function enableModForGame(fullGamePath, mod, modName, appId, event) {
     try {
-        const filesToLink = mod;
+        const modFilesToLink = mod;
         const originalFiles = [];
 
-        const filtered = getGameRootDir(fullGamePath, appId, originalFiles, mod)
-        const original = [ ...filtered ];
-
-        filtered.forEach(file => {
-            const prefix = '_' + file.file;
-            const fullOriginalFilePath = path.join(file.fullPath, file.file);
-            const prefixFilePath = path.join(file.fullPath, prefix);
-            fs.renameSync(fullOriginalFilePath, prefixFilePath);
-        })
-
-        filesToLink.forEach(mod => {
-            try {
-                console.log(mod);
-                const matchingOriginalFile = original.find(original =>
-                    original.path === mod.path && original.file === mod.file);
-
-                console.log(matchingOriginalFile)
-                if (matchingOriginalFile) {
-                    const modPath = path.join(mod.fullPath, mod.file);
-                    const gamePath = path.join(matchingOriginalFile.fullPath, mod.file);
-                    fs.linkSync(modPath, gamePath);
-                }
-            } catch (error) {
-                console.error(error);
-                sendError(event, 'Error while trying to enable mod has occurred', 'EnableModErr', 500);
+        const originalFilesToRename = getGameRootDir(fullGamePath, appId, originalFiles, mod)
+        let conflict = false;
+        /* Rename original file */
+        for (const file of originalFilesToRename) {
+            const originalFile = `${file.fullPath}\\${file.file}`
+            const conflictedFile = await fs.promises.access(`${file.fullPath}\\_${file.file}`).then(() => true).catch(() => false);
+            console.log('Conflicted file found:', conflictedFile);
+            if (conflictedFile) {
+                console.log('Conflict detected');
+                conflict = true;
+                break;
             }
-        })
+            const renamedFile = `${file.fullPath}\\_${file.file}`
+            await fs.promises.rename(originalFile, renamedFile);
+            console.log('Renaming...', originalFile, renamedFile);
+        }
 
-        sendMessage(event, modName, 'Successfully Enabled Mod', 200, 'success');
-        return filtered;
+        if (conflict) {
+            return false;
+        }
+        else {
+            /* Link mod files to game directory */
+            for (const file of modFilesToLink) {
+                const modLinkPath = `${file.fullPath}\\${file.file}`;
+                const originalFileObject = originalFiles.find(x => x.fullPath && x.file === file.file)
+                const originalFileLinkPath = `${originalFileObject.fullPath}\\${originalFileObject.file}`;
+
+                const isRenamed = await fs.promises.access(`${originalFileObject.fullPath}\\_${originalFileObject.file}`).then(() => true).catch(() => false);
+                const fileToLink = `${file.fullPath}\\${file.file}`
+
+                if (isRenamed) {
+                    await fs.promises.link(modLinkPath, originalFileLinkPath);
+                }
+                console.log(isRenamed);
+                console.log('Mod file to link to directory: ', fileToLink);
+            }
+            return true;
+        }
     } catch (error) {
         console.error(error);
-        sendError(event, 'Error while trying to enable mod has occurred', 'EnableModErr', 500);
+        return false;
     }
 }
-function disableModForGame(fullGamePath, mod, modName, appId, event) {
+async function disableModForGame(fullGamePath, mod, modName, appId, event) {
     const filesToUnlink = mod;
     const originalFiles = [];
 
@@ -459,23 +475,26 @@ function disableModForGame(fullGamePath, mod, modName, appId, event) {
             originalFile.path === fileToUnlink.path && `_${originalFile.file}` === fileToUnlink.file
         )
     );
-
-    filtered.forEach(file => {
-        const prefixFilePath = path.join(file.fullPath, file.file);
-        const fullOriginalFilePath = path.join(file.fullPath, file.file.replace('_', ''));
-        if (fs.existsSync(prefixFilePath)) {
+    /* Unlink and then rename */
+    await Promise.all([
+        filtered.forEach(async file => {
+            const fullOriginalFilePath = path.join(file.fullPath, file.file.replace('_', ''));
             if (fullOriginalFilePath) {
-                fs.unlinkSync(fullOriginalFilePath);
-                fs.renameSync(prefixFilePath, fullOriginalFilePath);
-                sendError(event, modName, `An error has occurred while trying to disable mod: ${mod}`, 500)
+                await fs.promises.unlink(fullOriginalFilePath);
+            }
+        }),
+        filtered.forEach(async file => {
+            const fullOriginalFilePath = path.join(file.fullPath, file.file.replace('_', ''));
+            const prefixFilePath = path.join(file.fullPath, file.file);
+            if (fs.existsSync(prefixFilePath)) {
+                await fs.promises.rename(prefixFilePath, fullOriginalFilePath);
             }
             else {
                 console.error('No original files found to revert prefixed state');
-                return sendError(event, modName, `No original files found to revert prefixed state, exiting...`, 500);
             }
-        }
-        sendMessage(event, modName, 'Successfully Disabled Mod', 200, 'success');
-    })
+        })
+    ])
+    return true;
 }
 function sendError(event, message, name, code) {
     const obj = {
@@ -497,8 +516,8 @@ function sendMessage(event, message, name, code, type) {
 }
 function createWindow() {
     const win = new BrowserWindow({
-        width: 800,
-        height: 600,
+        width: 1440,
+        height: 900,
         minHeight: 600,
         minWidth: 800,
         frame: false,

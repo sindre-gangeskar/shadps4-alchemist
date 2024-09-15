@@ -6,7 +6,6 @@ import { IoIosFolderOpen } from "react-icons/io";
 import GamesWrapper from "../partials/GamesWrapper";
 import Modal from '../partials/Modal';
 import ToggleButton from '../partials/ToggleButton';
-import { FaCheckCircle, FaExclamationCircle, FaExclamationTriangle } from "react-icons/fa";
 import { FaFaceFrown } from "react-icons/fa6";
 
 function Install() {
@@ -19,8 +18,6 @@ function Install() {
 	const [ modalContent, setModalContent ] = useState(null);
 	const [ modalOpen, setModalOpen ] = useState(false);
 	const [ selectedApp, setSelectedApp ] = useState(false);
-	const [ setError ] = useGlobalStateStore(state => [ state.setError ]);
-	const [ setMessage ] = useGlobalStateStore(state => [ state.setMessage ]);
 	const [ type, setType ] = useGlobalStateStore(state => [ state.type, state.setType ]);
 	const [ tooltipVisible, setToolTipVisible ] = useGlobalStateStore(state => [ state.tooltipVisible, state.setToolTipVisible ]);
 
@@ -46,9 +43,6 @@ function Install() {
 		window.electron.send('open-file-dialog');
 	}
 
-	const hideTooltip = async () => {
-		setToolTipVisible(false);
-	}
 
 	const bootGame = () => {
 		let width = widthSettingRef.current.value;
@@ -105,71 +99,6 @@ function Install() {
 			setLogType("sync")
 		else setLogType("async");
 	}
-
-	/* Set tooltip error messages */
-	useEffect(() => {
-		window.electron.on('error', (event, err) => {
-			if (err) {
-				const header = <div className="tooltip-header">
-					<p className="tooltip-title">{err.name} <FaExclamationCircle /></p>
-				</div>
-
-				const body = <div className="tooltip-body">
-					<p>{err.message}</p>
-				</div>
-
-				const footer = <div className="tooltip-footer">
-					<button className="btn tooltip-btn" onClick={hideTooltip}>OK</button>
-				</div>
-				const obj = ({ header: header, body: body, footer: footer })
-				setError(obj);
-			}
-
-			return () => {
-				window.electron.removeAllListeners('error');
-			}
-		})
-		window.electron.on('message', (event, message) => {
-			if (message) {
-				if (message.type === 'success') {
-					setType('success')
-					const header = <div className="tooltip-header-success">
-						<p className="tooltip-title-success">{message.name}</p>
-					</div>
-
-					const body = <div className="tooltip-body-success">
-						<p>{message.message}</p>
-					</div>
-
-					const footer = <div className="tooltip-footer-success">
-						<p className="icon">{<FaCheckCircle size={25} />}</p>
-					</div>
-
-					const obj = ({ header: header, body: body, footer: footer });
-					setMessage(obj);
-				}
-				else {
-					const header = <div className="tooltip-header">
-						<p className="tooltip-title">{message.name}</p>
-					</div>
-
-					const body = <div className="tooltip-body">
-						<p>{message.message}</p>
-					</div>
-
-					const footer = <div className="tooltip-footer">
-						<button className="btn tooltip-btn" onClick={hideTooltip}>OK</button>
-					</div>
-					const obj = ({ header: header, body: body, footer: footer });
-					setMessage(obj);
-				}
-			}
-
-			return () => {
-				window.electron.removeListener('message');
-			}
-		})
-	}, [])
 
 	useEffect(() => {
 		const handleLibraryRefresh = (event, data) => {
@@ -333,7 +262,7 @@ function Install() {
 						<p className="category">Graphics</p>
 						<div className="setting-item">
 							<p>Screen Width:</p>
-							<input ref={widthSettingRef} type="text" className="input setting-input" placeholder={`Current: ${screenWidth}`} onChange={e => {setScreenWidth(e.target.value)}} />
+							<input ref={widthSettingRef} type="text" className="input setting-input" placeholder={`Current: ${screenWidth}`} onChange={e => { setScreenWidth(e.target.value) }} />
 						</div>
 						<div className="setting-item">
 							<p>Screen Height:</p>

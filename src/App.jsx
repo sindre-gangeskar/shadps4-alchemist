@@ -11,14 +11,14 @@ import ProcessActive from './views/ProcessActive';
 import TitleBar from './partials/TitleBar';
 import Tooltip from './partials/Tooltip';
 import useGlobalStateStore from './js/globalStateStore';
+import { FaCheckCircle, FaExclamationCircle, FaExclamationTriangle } from "react-icons/fa";
 
 function App() {
-  const [ error ] = useGlobalStateStore(state => [ state.error ]);
-  const [ message ] = useGlobalStateStore(state => [ state.message ]);
-  const [ type ] = useGlobalStateStore(state => [ state.type ]);
+  const [ type, setType ] = useGlobalStateStore(state => [ state.type, state.setType ]);
   const [ setProcessActive ] = useGlobalStateStore(state => [ state.setProcessActive ])
   const [ tooltipContent, setToolTipContent ] = useGlobalStateStore(state => [ state.tooltipContent, state.setToolTipContent ]);
   const [ tooltipVisible, setToolTipVisible ] = useGlobalStateStore(state => [ state.tooltipVisible, state.setToolTipVisible ]);
+  const [ message, setMessage ] = useGlobalStateStore(state => [ state.message, state.setMessage ]);
 
   /* Settings */
   const [ setFullscreen ] = useGlobalStateStore(state => [ state.setFullscreen ]);
@@ -29,34 +29,18 @@ function App() {
   const [ screenHeight, setScreenHeight ] = useGlobalStateStore(state => [ state.screenHeight, state.setScreenHeight ]);
   const [ setLogType ] = useGlobalStateStore(state => [ state.setLogType ]);
 
-  var errorObj = {};
-  var messageObj = {};
   const navigate = useNavigate();
+
+  const hideTooltip = async () => {
+    setToolTipVisible(false);
+  }
+
+  /* Navigate to the main menu */
   useEffect(() => {
     navigate('/install')
   }, [])
 
-  /* Handle Errors */
-  useEffect(() => {
-    if (error) {
-      if (error.header)
-        errorObj.header = error.header;
-      if (error.body)
-        errorObj.body = error.body;
-      if (error.footer)
-        errorObj.footer = error.footer;
-
-      setToolTipContent(errorObj);
-    }
-
-    if (message) {
-      if (message.header) messageObj.header = message.header;
-      if (message.body) messageObj.body = message.body;
-      if (message.footer) messageObj.footer = message.footer;
-      setToolTipContent(messageObj);
-    }
-  }, [ error, message ])
-
+  /* Check for ShadPS4 Process */
   useEffect(() => {
     const handleShadPS4ProcessListener = async (event, data) => {
       if (data) {
@@ -76,16 +60,68 @@ function App() {
     }
   }, [])
 
+  /* Set tooltip messages / error messages */
+  useEffect(() => {
+    window.electron.on('message', (event, message) => {
+      if (message) {
+        /* Success State */
+        if (message.type === 'success') {
+          setType('success')
+          const header = <div className="tooltip-header success">
+            <p className="tooltip-title-success">{message.name}</p>
+          </div>
+
+          const body = <div className="tooltip-body success">
+            <p>{message.message}</p>
+          </div>
+
+          const footer = <div className="tooltip-footer success">
+            <p className="icon">{<FaCheckCircle size={25} />}</p>
+          </div>
+
+          const obj = ({ header: header, body: body, footer: footer });
+          setMessage(obj);
+          setToolTipContent(obj);
+        }
+
+        /* Error State */
+        if (message.type === 'error') {
+          setType('error');
+          const header = <div className="tooltip-header error">
+            <p className="tooltip-title">{message.name} <FaExclamationCircle /></p>
+          </div>
+
+          const body = <div className="tooltip-body error">
+            <p>{message.message}</p>
+          </div>
+
+          const footer = <div className="tooltip-footer error">
+            <button className="btn tooltip-btn" onClick={hideTooltip}>OK</button>
+          </div>
+          const obj = ({ header: header, body: body, footer: footer })
+          setMessage(obj);
+          setToolTipContent(obj);
+        }
+      }
+
+      return () => {
+        window.electron.removeListener('message');
+      }
+    })
+  }, [ message ])
+
+  /* Update tooltip content */
   useEffect(() => {
     if (tooltipContent !== null)
       setToolTipVisible(true);
-    else setToolTipVisible(false);
+
+    let timeoutID;
 
     const awaitFade = async () => {
       return new Promise((resolve) => {
-        setTimeout(() => {
+        timeoutID = setTimeout(() => {
           resolve()
-        }, 2000)
+        }, 2000);
       })
     }
     if (type === 'success') {
@@ -96,9 +132,11 @@ function App() {
       fadeOut();
     }
 
+    return () => { setToolTipVisible(false); clearTimeout(timeoutID) };
+
   }, [ tooltipContent, type ])
 
-/* Update Global Settings */
+  /* Update Global Settings */
   useEffect(() => {
     const handleSettingsListener = (event, data) => {
       console.log('Received Data:', data)
