@@ -164,8 +164,8 @@ function App() {
         <Route path='/options' key={'/options'} element={
           <Options key={'options'}></Options>
         }></Route>
-        <Route path='/' key={'/install'} element={
-          <Install key={'install'} />
+        <Route path='/' key={'/library'} element={
+          <Install key={'library'} />
         }></Route>
         <Route path='/create' key={'/create'} element={
           <Create key={'create'} />

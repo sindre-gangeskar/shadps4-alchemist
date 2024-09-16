@@ -6,7 +6,7 @@
   },
   "description": "A mod manager and games launcher for shadPS4 emulator",
   "version": "0.1.0",
-  "main": "build/electron.js",
+  "main": "public/electron.js",
   "type": "module",
   "homepage": "./",
   "private": true,
@@ -46,6 +46,13 @@
     ],
     "directories": {
       "buildResources": "assets"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "shadPS4 Alchemist"
     }
   },
   "eslintConfig": {

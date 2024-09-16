@@ -4,7 +4,7 @@ import '../css/Navbar.css';
 import useGlobalStateStore from "../js/globalStateStore";
 function Navbar() {
     const [ processActtive ] = useGlobalStateStore(state => [ state.processActive ]);
-    const routes = [ { path: '/options', name: 'options' }, { path: '/', name: 'install' }, { path: '/create', name: 'create' } ];
+    const routes = [ { path: '/options', name: 'options' }, { path: '/', name: 'library' }, { path: '/create', name: 'create' } ];
     return (
         <>
             <div className={`navbar-wrapper ${processActtive ? 'collapsed' : ''}`}>

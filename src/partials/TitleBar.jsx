@@ -8,8 +8,8 @@ function TitleBar() {
     const [ titleName, setTitleName ] = useState(null);
     const location = useLocation();
     useEffect(() => {
-        if (location.pathname === '/install')
-            setTitleName('Install A Mod');
+        if (location.pathname === '/')
+            setTitleName('Library');
         if (location.pathname === '/create')
             setTitleName('Create A Mod');
         if (location.pathname === '/options')

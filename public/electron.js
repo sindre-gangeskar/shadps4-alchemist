@@ -8,14 +8,13 @@ import toml from '@iarna/toml';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const dataFilePath = path.join(__dirname, '..', 'data');
+const dataFilePath = path.join(app.getPath('appData'), 'shadPS4 Alchemist');
 var games = [];
 
-if (!fs.existsSync(path.join(__dirname, '..', 'data')))
-    fs.mkdirSync(path.join(__dirname, '..', 'data'), {
+if (!fs.existsSync(dataFilePath))
+    fs.mkdirSync(dataFilePath), {
         recursive: true
-    })
-
+    }
 /* Electron Initialization */
 app.whenReady().then(createWindow);
 
@@ -515,7 +514,7 @@ function sendMessage(event, message, name, code, type) {
     event.sender.send('message', obj);
 }
 function createWindow() {
-    const win = new BrowserWindow({
+    let win = new BrowserWindow({
         width: 1440,
         height: 900,
         minHeight: 600,
@@ -529,12 +528,10 @@ function createWindow() {
             webSecurity: false
         },
     })
-    win.webContents.on('did-finish-load', () => {
-        win.webContents.openDevTools();
-    })
-    isDev ? win.loadURL('http://localhost:3000') :
-        win.loadFile(path.join(__dirname, 'preload.js'));
+    if (!isDev) win.removeMenu();
 
+    isDev ? win.loadURL('http://localhost:3000') : win.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
+    win.on('closed', () => win = null)
 }
 function readUInt(buffer, offset, length) {
     if (length === 1) return buffer.readUInt8(offset);
