@@ -2,9 +2,13 @@
   <br>
   <a href="https://github.com/sindre-gangeskar/shadps4-mm"><img src="https://github.com/sindre-gangeskar/shadps4-mm/blob/master/.github/shadps4-alchemist.jpg" width="800"></a>
   <br>
-  <b>Mod Manager and Games Launcher for shadPS4</b>
+  <span>
+    <b>A mod manager and games launcher for</b><a href="https://github.com/shadps4-emu/shadPS4"> shadPS4</a>
+  </span>
+ 
   <br>
 </h1>
+
 
 <p align="center">
   <img src="https://github.com/sindre-gangeskar/shadps4-mm/blob/master/documents/screenshots/library.png" width="400">
