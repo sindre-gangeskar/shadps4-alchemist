@@ -117,7 +117,7 @@ ipcMain.on('open-file-dialog', async (event) => {
                 code: 400
             };
             console.error(error.message);
-            event.sender.send('error', error);
+            sendMessage(event, error.message, error.name, 400, 'error');
         }
     }
 })
@@ -129,9 +129,11 @@ ipcMain.on('open-in-explorer', async (event, data) => {
         }
         const initialData = parseInitialModData(event, data.data)
         if (initialData) {
+            /* Open game directory */
             if (data.type === 'game' && pathExists(initialData.gameDir))
                 shell.openPath(initialData.gameDir);
 
+            /* Open mod directory */
             if (data.type === 'mod') {
                 if (pathExists(initialData.modsDir))
                     shell.openPath(initialData.modsDir)
@@ -143,7 +145,7 @@ ipcMain.on('open-in-explorer', async (event, data) => {
             else return;
         }
     } catch (error) {
-        sendError(event, 'test', 'test', 500);
+        sendMessage(event, 'Failed to open directory in file explorer', 'FileExplorerErr', 500, 'error');
         console.error(error);
     }
 })
@@ -238,7 +240,7 @@ ipcMain.on('enable-mod', async (event, data) => {
         else sendMessage(event, `Trying to activate: ${data.modName}`, `Conflict detected: file is already in use by another mod. Disable conflicting mod and retry`, 200, 'error');
     } catch (error) {
         console.error(error);
-        sendError(event, 'An error has occurred while enabling enabling mod', 'EnableModErr', 500);
+        sendMessage(event, 'An error has occurred while enabling enabling mod', 'Failed To Enable Mod', 500, 'error');
     }
 
 })
@@ -267,10 +269,9 @@ ipcMain.on('disable-mod', async (event, data) => {
             sendMessage(event, data.modName, 'Successfully Disabled Mod', 200, 'success');
             event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
         }
-        else sendError(event, 'An error occurred while attempting to disable mod', 'UnknownDisableErr', 500);
+        else sendMessage(event, 'An error occurred while attempting to disable mod', 'UnknownDisableErr', 500, 'error');
     } catch (error) {
         console.error(error);
-        return sendError(event, 'An error occurred while trying to disable mod', 'UnknownError', 500);
     }
 })
 ipcMain.on('get-settings', async (event) => {
@@ -348,7 +349,7 @@ function parseInitialModData(event, data) {
         }
     } catch (error) {
         console.error(error);
-        return sendError(event, 'An error occurred while trying to parse mod config file', 'ModParsingError', 500);
+        return sendMessage(event, 'An error occurred while trying to parse mod config file', 'ModParsingError', 500, 'error');
     }
 }
 function getAllMods(allModsList) {
@@ -400,7 +401,7 @@ function getGameRootDir(fullGamePath, appId, originalFiles, filesToLink) {
         return filtered;
     } catch (error) {
         console.error(error);
-        sendError('An error has occurred while reading the game root directory');
+        sendMessage('An error has occurred while reading the game root directory', 'An internal error has occured while attempting to get game root directory', 'GameRootDirErr', 500, 'error');
     }
 
 }
@@ -503,15 +504,6 @@ async function disableModForGame(fullGamePath, mod, modName, appId, event) {
         }
     }
     return true;
-}
-function sendError(event, message, name, code) {
-    const obj = {
-        message: message,
-        name: name,
-        code: code,
-        type: 'error'
-    };
-    event.sender.send('error', obj);
 }
 function sendMessage(event, message, name, code, type) {
     const obj = {
