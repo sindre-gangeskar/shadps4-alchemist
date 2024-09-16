@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import isDev from 'electron-is-dev';
 import path from 'path';
-import fs, { unlinkSync } from 'fs';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 import toml from '@iarna/toml';
@@ -27,7 +27,6 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0)
         createWindow();
 })
-
 
 ipcMain.on('open-file-dialog', async (event) => {
     const exists = fs.existsSync(`${dataFilePath}/config.json`)
@@ -526,11 +525,14 @@ function createWindow() {
             contextIsolation: true,
             preload: path.join(__dirname, 'preload.js'),
             webSecurity: false
-        }
+        },
     })
-
+    win.webContents.on('did-finish-load', () => {
+        win.webContents.openDevTools();
+    })
     isDev ? win.loadURL('http://localhost:3000') :
-        win.loadFile(__dirname, '../build/index.html');
+        win.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
+
 }
 function readUInt(buffer, offset, length) {
     if (length === 1) return buffer.readUInt8(offset);

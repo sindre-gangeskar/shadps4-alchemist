@@ -222,16 +222,15 @@ function Install() {
 									{modsForCurrentApp.map(mod => {
 										const isModEnabled = enabledMods && enabledMods.find(x => x.modName === mod) ? true : false;
 										return (
-											<>
-												<div className="mod-item-group">
-													<li className="mod-item">{mod}</li>
-													<ToggleButton checked={isModEnabled} onClick={() => {
-														if (!isModEnabled)
-															enableMod({ modName: mod, id: selectedApp.id })
-														else disableMod({ modName: mod, id: selectedApp.id });
-													}} />
-												</div>
-											</>);
+											<div className="mod-item-group" key={mod}> {/* key on outermost div */}
+												<li className="mod-item" key={mod}>{mod}</li> {/* Assuming mod is a string, not mod.modName */}
+												<ToggleButton checked={isModEnabled} onClick={() => {
+													if (!isModEnabled)
+														enableMod({ modName: mod, id: selectedApp.id })
+													else disableMod({ modName: mod, id: selectedApp.id });
+												}} />
+											</div>
+										);
 									})}
 								</ul>
 							</>

@@ -35,11 +35,6 @@ function App() {
     setToolTipVisible(false);
   }
 
-  /* Navigate to the main menu */
-  useEffect(() => {
-    navigate('/install')
-  }, [])
-
   /* Check for ShadPS4 Process */
   useEffect(() => {
     const handleShadPS4ProcessListener = async (event, data) => {
@@ -164,11 +159,12 @@ function App() {
       <TitleBar />
       <Navbar />
       <Tooltip content={tooltipContent} visible={tooltipVisible} type={type} />
+
       <Routes>
         <Route path='/options' key={'/options'} element={
           <Options key={'options'}></Options>
         }></Route>
-        <Route path='/install' key={'/install'} element={
+        <Route path='/' key={'/install'} element={
           <Install key={'install'} />
         }></Route>
         <Route path='/create' key={'/create'} element={

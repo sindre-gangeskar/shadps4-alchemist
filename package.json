@@ -1,8 +1,9 @@
 {
   "name": "shadps4-mod-manager-js",
   "version": "0.1.0",
-  "main": "electron/main.js",
+  "main": "./electron/electron.js",
   "type": "module",
+  "homepage": "./",
   "private": true,
   "dependencies": {
     "@iarna/toml": "^2.2.5",
@@ -24,23 +25,21 @@
   },
   "scripts": {
     "start": "cross-env BROWSER=none react-scripts start",
-    "build-react": "react-scripts build",
+    "react-build": "react-scripts build",
     "build-electron": "electron-builder",
     "electron": "electron .",
-    "dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && npm run electron\""
+    "dev": "concurrently \"npm start\" \"wait-on http://localhost:3000 && npm run electron\"",
+    "build": "npm run react-build && npm run build-electron"
   },
   "build": {
-    "appId": "shadps4-mod-manager",
-    "productName": "ShadPS4 Bridge",
+    "appId": "com.shadps4_hub",
+    "productName": "shadPS4 Hub",
     "files": [
-      "electron/**/*",
+      "build/**/*",
+      "public/**/*",
       "data/**/*",
-      "build/**/*"
-    ],
-    "directories": {},
-    "extraMetadata": {
-      "main": "./electron/main.js"
-    }
+      "src/**/*"
+    ]
   },
   "eslintConfig": {
     "extends": [
