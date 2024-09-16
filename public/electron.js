@@ -521,6 +521,7 @@ function createWindow() {
         minHeight: 600,
         minWidth: 800,
         frame: false,
+        icon: path.join(__dirname, '..', 'assets', 'shadps4_alchemist.ico'),
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -532,7 +533,7 @@ function createWindow() {
         win.webContents.openDevTools();
     })
     isDev ? win.loadURL('http://localhost:3000') :
-        win.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
+        win.loadFile(path.join(__dirname, 'preload.js'));
 
 }
 function readUInt(buffer, offset, length) {
