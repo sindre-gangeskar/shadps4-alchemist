@@ -25,7 +25,7 @@ function Install() {
 	const [ fullscreen, setFullscreen ] = useGlobalStateStore(state => [ state.fullscreen, state.setFullscreen ]);
 	const [ isPS4Pro, setIsPS4Pro ] = useGlobalStateStore(state => [ state.isPS4Pro, state.setIsPS4Pro ]);
 	const [ showSplash, setShowSplash ] = useGlobalStateStore(state => [ state.showSplash, state.setShowSplash ]);
-	const [ vBlankDivider ] = useGlobalStateStore(state => [ state.VBlankDivider ]);
+	const [ vBlankDivider, setvBlankDivider ] = useGlobalStateStore(state => [ state.vBlankDivider, state.setvBlankDivider ]);
 	const [ screenWidth, setScreenWidth ] = useGlobalStateStore(state => [ state.screenWidth, state.setScreenWidth ]);
 	const [ screenHeight, setScreenHeight ] = useGlobalStateStore(state => [ state.screenHeight, state.setScreenHeight ]);
 	const [ logType, setLogType ] = useGlobalStateStore(state => [ state.logType ]);
@@ -43,17 +43,17 @@ function Install() {
 		window.electron.send('open-file-dialog');
 	}
 
-
 	const bootGame = () => {
 		let width = widthSettingRef.current.value;
 		let height = heightSettingRef.current.value;
+		let vBlankDividerValue = vBlankDividerRef.current.value;
 		window.electron.send('launch-game', ({
 			bin: `${selectedApp.path}/eboot.bin`,
 			fullscreen: fullscreen,
 			showSplash: showSplash,
 			screenWidth: width || screenWidth,
 			screenHeight: height || screenHeight,
-			vBlankDivider: vBlankDivider,
+			vBlankDivider: vBlankDividerValue || vBlankDivider,
 			logType: logType,
 			isPS4Pro: isPS4Pro
 		}));
@@ -269,7 +269,7 @@ function Install() {
 						</div>
 						<div className="setting-item">
 							<p>Vblank Divider</p>
-							<input ref={vBlankDividerRef} type="number" placeholder="1" className="input setting-input" min={0} max={10} defaultValue={vBlankDivider} />
+							<input ref={vBlankDividerRef} type="number" placeholder={`Current: ${vBlankDivider}`} className="input setting-input" min={0} max={10} onChange={(e) => { setvBlankDivider(e.target.value) }} />
 						</div>
 						<p className="category">Logger</p>
 						<div className="setting-item">

@@ -32,7 +32,7 @@ const useGlobalStateStore = create(set => ({
     setShowSplash: showSplash => set({ showSplash }),
     setScreenWidth: screenWidth => set({ screenWidth }),
     setScreenHeight: screenHeight => set({ screenHeight }),
-    setVBlankDivider: vBlankDivider => set({ vBlankDivider }),  // Fixed typo from VBlankProvider to VBlankDivider
+    setvBlankDivider: vBlankDivider => set({ vBlankDivider }),  // Fixed typo from VBlankProvider to VBlankDivider
     setLogType: logType => set({ logType })
 }));
 

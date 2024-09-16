@@ -24,7 +24,7 @@ function App() {
   const [ setFullscreen ] = useGlobalStateStore(state => [ state.setFullscreen ]);
   const [ setIsPS4Pro ] = useGlobalStateStore(state => [ state.setIsPS4Pro ]);
   const [ setShowSplash ] = useGlobalStateStore(state => [ state.setShowSplash ]);
-  const [ setVBlankDivider ] = useGlobalStateStore(state => [ state.setVBlankDivider ]);
+  const [ setvBlankDivider ] = useGlobalStateStore(state => [ state.setvBlankDivider ]);
   const [ screenWidth, setScreenWidth ] = useGlobalStateStore(state => [ state.screenWidth, state.setScreenWidth ]);
   const [ screenHeight, setScreenHeight ] = useGlobalStateStore(state => [ state.screenHeight, state.setScreenHeight ]);
   const [ setLogType ] = useGlobalStateStore(state => [ state.setLogType ]);
@@ -136,7 +136,7 @@ function App() {
     const handleSettingsListener = (event, data) => {
       console.log('Received Data:', data)
       if (data) {
-        setVBlankDivider(data.GPU.vblankDivider);
+        setvBlankDivider(data.GPU.vblankDivider);
         setScreenWidth(data.GPU.screenWidth);
         setScreenHeight(data.GPU.screenHeight);
         setFullscreen(data.General.Fullscreen);

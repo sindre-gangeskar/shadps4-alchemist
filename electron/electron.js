@@ -160,7 +160,7 @@ ipcMain.on('launch-game', async (event, data) => {
         shadPS4ConfigData.General.isPS4Pro = data.isPS4Pro;
         shadPS4ConfigData.General.showSplash = data.showSplash;
         shadPS4ConfigData.General.logType = data.logType;
-        shadPS4ConfigData.GPU.vBlankProvider = +data.vBlankProvider;
+        shadPS4ConfigData.GPU.vblankDivider = +data.vBlankDivider;
         shadPS4ConfigData.GPU.screenHeight = +data.screenHeight;
         shadPS4ConfigData.GPU.screenWidth = +data.screenWidth;
 
