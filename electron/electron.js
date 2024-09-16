@@ -254,7 +254,7 @@ ipcMain.on('disable-mod', async (event, data) => {
         const absoluteModsPath = `${initialData.modsDir}/${mod.modName}`;
 
         const filesInMod = getFilesInMod(absoluteModsPath, mod.modName);
-        const success = disableModForGame(initialData.gameDir, filesInMod, mod.modName, data.id, event)
+        const success = await disableModForGame(initialData.gameDir, filesInMod, mod.modName, data.id, event)
 
         if (success) {
             /* If Mod does not exist in file - add it */
@@ -474,25 +474,34 @@ async function disableModForGame(fullGamePath, mod, modName, appId, event) {
             originalFile.path === fileToUnlink.path && `_${originalFile.file}` === fileToUnlink.file
         )
     );
-    /* Unlink and then rename */
-    await Promise.all([
-        filtered.forEach(async file => {
-            const fullOriginalFilePath = path.join(file.fullPath, file.file.replace('_', ''));
-            if (fullOriginalFilePath) {
-                await fs.promises.unlink(fullOriginalFilePath);
-            }
-        }),
-        filtered.forEach(async file => {
-            const fullOriginalFilePath = path.join(file.fullPath, file.file.replace('_', ''));
-            const prefixFilePath = path.join(file.fullPath, file.file);
-            if (fs.existsSync(prefixFilePath)) {
-                await fs.promises.rename(prefixFilePath, fullOriginalFilePath);
-            }
-            else {
-                console.error('No original files found to revert prefixed state');
-            }
-        })
-    ])
+    let failed = false;
+
+    /* Unlink hardlink */
+    for (const file of filtered) {
+        const fullFilePathToLink = path.join(file.fullPath, file.file.replace('_', ''));
+        if (fullFilePathToLink) {
+            await fs.promises.unlink(fullFilePathToLink);
+        }
+        else {
+            failed = true
+            break;
+        }
+    }
+
+    if (failed)
+        return false;
+
+    /* Rename original file to origin */
+    for (const file of filtered) {
+        const fullOriginalFilePath = path.join(file.fullPath, file.file.replace('_', ''));
+        const prefixFilePath = path.join(file.fullPath, file.file);
+        if (fs.existsSync(prefixFilePath)) {
+            await fs.promises.rename(prefixFilePath, fullOriginalFilePath);
+        }
+        else {
+            console.error('No original files found to revert prefixed state');
+        }
+    }
     return true;
 }
 function sendError(event, message, name, code) {
