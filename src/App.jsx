@@ -44,7 +44,7 @@ function App() {
           setProcessActive(true);
         }
         if (data.processStatus === 'inactive') {
-          navigate('/install');
+          navigate('/');
           setProcessActive(false);
         }
       }
