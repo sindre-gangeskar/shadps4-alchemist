@@ -530,7 +530,7 @@ function createWindow() {
     })
     if (!isDev) win.removeMenu();
 
-    isDev ? win.loadURL('http://localhost:3000') : win.loadURL(`file://${path.join(__dirname, '../build/index.html')}`);
+    isDev ? win.loadURL('http://localhost:3000') : win.loadURL(`file://${path.join(__dirname, '..', 'build', 'index.html')}`);
     win.on('closed', () => win = null)
 }
 function readUInt(buffer, offset, length) {
