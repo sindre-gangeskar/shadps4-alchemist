@@ -1,6 +1,6 @@
 import './css/App.css';
 import './css/Tooltip.css';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom'
 
 import Install from './views/Install';
@@ -11,7 +11,7 @@ import ProcessActive from './views/ProcessActive';
 import TitleBar from './partials/TitleBar';
 import Tooltip from './partials/Tooltip';
 import useGlobalStateStore from './js/globalStateStore';
-import { FaCheckCircle, FaExclamationCircle, FaExclamationTriangle } from "react-icons/fa";
+import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 
 function App() {
   const [ type, setType ] = useGlobalStateStore(state => [ state.type, state.setType ]);
