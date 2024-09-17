@@ -56,10 +56,11 @@
     }
   },
   "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "extends": "react-app",
+    "rules": {
+      "no-unused-vars": "warn",
+      "react-hooks/exhaustive-deps": "warn"
+    }
   },
   "browserslist": {
     "production": [
