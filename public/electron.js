@@ -150,7 +150,7 @@ ipcMain.on('open-in-explorer', async (event, data) => {
 })
 ipcMain.on('launch-game', async (event, data) => {
     try {
-        const config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data', 'config.json')));
+        const config = JSON.parse(fs.readFileSync(path.join(dataFilePath, 'config.json')));
         const shadPS4Exe = config.shadPS4Exe;
         const shadPS4Dir = path.dirname(shadPS4Exe);
         const shadPS4ConfigFilePath = path.join(shadPS4Dir, 'user', 'config.toml');
