@@ -100,13 +100,20 @@ function Install() {
 		else setLogType("async");
 	}
 
+	/* Refresh / set games in library */
 	useEffect(() => {
 		const handleLibraryRefresh = (event, data) => {
-			setGames(data.games);
+			if (data && data.games) {
+				console.log('Games data:', data);
+				setGames(data.games);
+			}
 		}
 
-		window.electron.on('refresh-library', handleLibraryRefresh);
-		return () => { window.electron.removeListener('refresh-games', handleLibraryRefresh) }
+		if (!games) {
+			window.electron.send('fetch-games-in-library');
+		}
+		window.electron.on('fetch-games-in-library', handleLibraryRefresh);
+		return () => { window.electron.removeListener('fetch-games-in-library', handleLibraryRefresh) }
 	}, [])
 
 	/* Set available mods and fetch their current states for selected app from IPC */
@@ -331,19 +338,6 @@ function Install() {
 			})
 		}
 	}, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods, fullscreen, showSplash, logType, isPS4Pro, vBlankDivider ])
-
-
-
-	/* Refresh Games */
-	useEffect(() => {
-		const handleGamesUpdated = (event, data) => {
-			setGames(data.games);
-			setUpdated(true);
-		};
-
-		window.electron.on('games-updated', handleGamesUpdated);
-		return () => { window.electron.removeListener('games-updated', handleGamesUpdated); };
-	}, []);
 
 	return (
 		<>

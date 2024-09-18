@@ -28,10 +28,11 @@ app.on('activate', () => {
 })
 
 ipcMain.on('open-file-dialog', async (event) => {
-    const exists = fs.existsSync(`${dataFilePath}/config.json`)
-
-    if (!exists)
-        fs.writeFileSync(`${dataFilePath}/config.json`, JSON.stringify({}, null, 2));
+    const exists = fs.existsSync(dataFilePath);
+    if (!exists) {
+        fs.mkdirSync(dataFilePath, { recursive: true });
+    }
+    await fs.promises.writeFile(path.join(dataFilePath, 'config.json'), JSON.stringify('', null, 2))
 
     const setGamesLibrary = await dialog.showOpenDialog({
         title: 'Select ShadPS4 Games Library',
@@ -104,9 +105,8 @@ ipcMain.on('open-file-dialog', async (event) => {
         // Save and send data to rendering client
         const paths = [ config.games_path, config.mods_path, config.shadPS4Exe ];
         if (checkSameDrive(paths)) {
-            fs.writeFileSync(`${dataFilePath}/config.json`, JSON.stringify(config, null, 2));
-            saveConfig(config, 'config.json');
-            event.sender.send('games-updated', { games: games, shadPS4Exe: config.selectedFile });
+            await saveConfig(config, path.resolve(`${dataFilePath}/config.json`));
+            event.sender.send('fetch-games-in-library', { games: games, shadPS4Exe: config.selectedFile });
         }
 
         else {
@@ -190,14 +190,12 @@ ipcMain.on('launch-game', async (event, data) => {
     }
 })
 ipcMain.on('fetch-games-in-library', async (event) => {
-    const config = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
+    const config = JSON.parse(await fs.promises.readFile(path.join(dataFilePath, 'config.json')));
     getGamesInLibrary(config);
 
-    if (config && config.games)
-        event.sender.send('refresh-library', { games: config.games })
-
-    console.log(config.games);
+    event.sender.send('fetch-games-in-library', { games: config.games })
 })
+
 /* Mods */
 ipcMain.on(`get-mods-directory`, async (event, id) => {
     const configFile = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
@@ -232,7 +230,7 @@ ipcMain.on('enable-mod', async (event, data) => {
             else fileData.mods[ data.modName ].enabled = true;
 
             const mods = getAllMods(fileData);
-            saveConfig(fileData, initialData.modConfigPath);
+            await saveConfig(fileData, initialData.modConfigPath);
             sendMessage(event, data.modName, 'Successfully Enabled Mod', 200, 'success');
             event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
         }
@@ -264,7 +262,7 @@ ipcMain.on('disable-mod', async (event, data) => {
             else fileData.mods[ data.modName ].enabled = false;
 
             const mods = getAllMods(fileData)
-            saveConfig(fileData, initialData.modConfigPath);
+            await saveConfig(fileData, initialData.modConfigPath);
             sendMessage(event, data.modName, 'Successfully Disabled Mod', 200, 'success');
             event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
         }
@@ -275,20 +273,22 @@ ipcMain.on('disable-mod', async (event, data) => {
 })
 ipcMain.on('get-settings', async (event) => {
     try {
-        const config = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
-        const shadPS4Dir = path.dirname(config.shadPS4Exe);
-        console.log(shadPS4Dir);
-        const shadPS4Config = fs.readFileSync(path.join(shadPS4Dir, 'user', 'config.toml'));
-        const shadPS4ConfigData = toml.parse(shadPS4Config);
+        const exists = fs.existsSync(path.join(dataFilePath, 'config.json'));
+        if (exists) {
+            const config = JSON.parse(fs.readFileSync(`${dataFilePath}/config.json`));
+            const shadPS4Dir = path.dirname(config.shadPS4Exe);
+            const shadPS4Config = fs.readFileSync(path.join(shadPS4Dir, 'user', 'config.toml'));
+            const shadPS4ConfigData = toml.parse(shadPS4Config);
 
-        event.sender.send('get-settings', shadPS4ConfigData);
+            event.sender.send('get-settings', shadPS4ConfigData);
+        }
     } catch (error) {
         console.error(error);
     }
 })
 /* Client Handling */
 ipcMain.handle('get-json-data', async () => {
-    const exists = fs.existsSync(dataFilePath + '/config.json');
+    const exists = fs.existsSync(path.join(dataFilePath, 'config.json'));
     if (exists) {
         const config = `${dataFilePath}/config.json`;
         const data = JSON.parse(fs.readFileSync(config))
@@ -528,7 +528,6 @@ function createWindow() {
             webSecurity: false
         },
     })
-    if (!isDev) win.removeMenu();
 
     isDev ? win.loadURL('http://localhost:3000') : win.loadURL(`file://${path.join(__dirname, '..', 'build', 'index.html')}`);
     win.on('closed', () => win = null)
@@ -577,12 +576,12 @@ function parseSFO(buffer) {
 
     return { title, appVer, id };
 }
-function saveConfig(data, filePath) {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+async function saveConfig(data, filePath) {
+    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
 }
-function getGamesInLibrary(config) {
+async function getGamesInLibrary(config) {
     const gamesDirectory = config.games_path;
-    const gamesAvailable = fs.readdirSync(gamesDirectory).filter(x => x.startsWith('CUSA')); // Make sure all directories start with CUSA
+    const gamesAvailable = await fs.promises.readdir(gamesDirectory).filter(x => x.startsWith('CUSA')); // Make sure all directories start with CUSA
 
     gamesAvailable.forEach(directory => {
         const sfoExists = fs.existsSync(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo'));
@@ -600,5 +599,5 @@ function getGamesInLibrary(config) {
     })
 
     config.games = games;
-    saveConfig(config, `${dataFilePath}/config.json`);
+    await saveConfig(config, `${dataFilePath}/config.json`);
 }
