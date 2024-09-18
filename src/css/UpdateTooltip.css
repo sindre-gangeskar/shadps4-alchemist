@@ -1,0 +1,32 @@
+.update-tooltip-wrapper{
+  font-size: 0.8rem;
+  height: 50px;
+  padding: 15px;
+  text-align: center;
+  color: black;
+  background-color: white;
+  border-radius: 1.5rem;
+  text-align: center;
+  display: flex;
+  position: fixed;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bolder;
+  bottom: 0;
+  margin: 10px;
+  transition: 250ms ease;
+  cursor: pointer;
+}
+
+.tooltip-data{
+  display: flex;
+  align-items: center;
+  text-align: center;
+  gap: 5px;
+}
+
+.download-icon{
+  text-align: center;
+  color: var(--primary-color);
+  height: 20px;
+}

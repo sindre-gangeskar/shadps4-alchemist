@@ -3,6 +3,7 @@ import './css/Tooltip.css';
 import { useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom'
 
+import UpdateChecker from './partials/UpdateChecker';
 import Install from './views/Install';
 import Navbar from './partials/Navbar';
 import Options from './views/Options';
@@ -156,6 +157,7 @@ function App() {
   }, [ screenWidth, screenHeight ])
   return (
     <>
+      <UpdateChecker />
       <TitleBar />
       <Navbar />
       <Tooltip content={tooltipContent} visible={tooltipVisible} type={type} />

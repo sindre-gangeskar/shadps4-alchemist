@@ -5,18 +5,25 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 import toml from '@iarna/toml';
+import autoUpdater from './autoUpdater.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dataFilePath = path.join(app.getPath('appData'), 'shadPS4 Alchemist');
 var games = [];
 
+
 if (!fs.existsSync(dataFilePath))
     fs.mkdirSync(dataFilePath), {
         recursive: true
     }
+
+
 /* Electron Initialization */
-app.whenReady().then(createWindow);
+app.whenReady().then(async () => {
+    createWindow();
+});
+
 
 app.on('window-all-closed', () => {
     if (process.platform !== 'darwin')
@@ -194,6 +201,15 @@ ipcMain.on('fetch-games-in-library', async (event) => {
     getGamesInLibrary(config);
 
     event.sender.send('fetch-games-in-library', { games: config.games })
+})
+ipcMain.on('check-updates', async (event) => {
+    await autoUpdater.checkForUpdates();
+    console.log('Checking for updates');
+
+    event.sender.send('check-updates', { message: 'An update is available', updateAvailable: true });
+})
+ipcMain.on('initiate-download', async (event) => {
+    await autoUpdater.downloadUpdate(event);
 })
 
 /* Mods */
@@ -528,7 +544,6 @@ function createWindow() {
             webSecurity: false
         },
     })
-
     isDev ? win.loadURL('http://localhost:3000') : win.loadURL(`file://${path.join(__dirname, '..', 'build', 'index.html')}`);
     win.on('closed', () => win = null)
 }

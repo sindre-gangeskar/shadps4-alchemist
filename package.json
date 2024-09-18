@@ -10,11 +10,17 @@
   "type": "module",
   "homepage": "./",
   "private": true,
+  "repository": "https://github.com/sindre-gangeskar/shadps4-alchemist",
+  "publish": {
+    "provider": "github",
+    "releaseType": "release"
+  },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
     "@vitejs/plugin-react": "^4.3.1",
     "concurrently": "^9.0.1",
     "electron-is-dev": "^3.0.1",
+    "electron-updater": "^6.3.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.3.0",
