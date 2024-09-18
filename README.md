@@ -16,3 +16,5 @@
 
 
 ### WIP
+## Discord
+We have a discord server now and you can join it by clicking [here](https://discord.gg/XydC82W6u2)
