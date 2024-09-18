@@ -15,6 +15,13 @@
 </p>
 
 
-### WIP
+### Under development
+A pre-release is out but it is bare-bones and meant for testing. 
+It has the core functionality in place, enabling and disabling mods is functional as well launching games through shadPS4 Alchemist. 
+Please see the releases section. 
+
 ## Discord
-We have a discord server now and you can join it by clicking [here](https://discord.gg/XydC82W6u2)
+If you wish to test or just follow the progress of the project, consider joining the Discord server by 
+clicking [here](https://discord.gg/XydC82W6u2).
+
+You can choose to become a Tester by assigning yourself that role in **Channels & Roles** and provide valuable feedback and bug reports.
