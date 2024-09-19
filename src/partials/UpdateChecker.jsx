@@ -35,7 +35,6 @@ function UpdateChecker() {
 
   useEffect(() => {
     const handleDownload = (event, data) => {
-
       if (data && data.message) {
         setMessage(data.message);
       }
