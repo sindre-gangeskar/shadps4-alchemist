@@ -11,14 +11,13 @@ async function checkForUpdates(event) {
     autoUpdater.checkForUpdates(event);
 
     autoUpdater.once('update-available', () => {
-      event.sender.send('check-updates', { message: 'An update is available', updateAvailable: true })
+      event.sender.send('check-updates', { message: 'An update is available. Click to download and install', updateAvailable: true })
       resolve(true);
     })
 
     autoUpdater.once('update-not-available', () => {
       event.sender.send('check-updates', { message: 'There are no updates at this time', updateAvailable: false })
       resolve(false);
-      /*     event.sender.send('update-not-available', { message: 'No update is available' }) */
     })
 
     autoUpdater.once('error', (err) => {

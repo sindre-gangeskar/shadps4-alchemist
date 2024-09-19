@@ -5,7 +5,8 @@ import { GoDownload } from "react-icons/go";
 function UpdateChecker() {
   const [ message, setMessage ] = useState(null);
   const [ content, setContent ] = useState(null);
-
+  const [ progress, setProgress ] = useState(0);
+  const [ isDownloading, setIsDownloading ] = useState(false);
   useEffect(() => {
     const handleUpdateCheck = (event, data) => {
       if (data && data.updateAvailable) {
@@ -37,6 +38,11 @@ function UpdateChecker() {
       if (data && data.message) {
         setMessage(data.message);
       }
+
+      if (data && data.progress) {
+        setProgress(data.progress);
+        setIsDownloading(true);
+      }
       console.log(data);
     }
     window.electron.on('initiate-download', handleDownload);
@@ -44,7 +50,7 @@ function UpdateChecker() {
   }, [])
 
   return (
-    <UpdateTooltip content={content} visible={!!message} onClick={initializeDownload} />
+    <UpdateTooltip content={content} visible={!!message} progress={progress} isDownloading={isDownloading} onClick={initializeDownload} />
   )
 }
 

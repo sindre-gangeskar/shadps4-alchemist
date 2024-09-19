@@ -1,14 +1,27 @@
-.update-tooltip-wrapper{
+:root {
+  --roundness: 1.5rem;
+}
+
+.tooltip-wrapper {
+  display: flex;
+  min-width: 300px;
+  width: 100%;
+  max-width: 500px;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+  font-weight: bold;
+}
+
+.update-tooltip-wrapper {
+  background-color: white;
   font-size: 0.8rem;
-  height: 50px;
   padding: 15px;
   text-align: center;
   color: black;
-  background-color: white;
-  border-radius: 1.5rem;
+  border-radius: var(--roundness);
   text-align: center;
   display: flex;
-  position: fixed;
   justify-content: space-between;
   align-items: center;
   font-weight: bolder;
@@ -16,17 +29,63 @@
   margin: 10px;
   transition: 250ms ease;
   cursor: pointer;
+  outline: 2px solid #00000000;
 }
 
-.tooltip-data{
+.update-tooltip-wrapper:hover{
+  background-color: var(--secondary-color);
+  color: white;
+  outline: 2px solid white;
+}
+
+
+.tooltip-data {
   display: flex;
   align-items: center;
   text-align: center;
   gap: 5px;
 }
 
-.download-icon{
+.download-icon {
   text-align: center;
   color: var(--primary-color);
   height: 20px;
+}
+
+.update-tooltip-progress-wrapper {
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  background-color: white;
+  border-radius: var(--roundness);
+  padding: 15px;
+  color: black;
+  gap: 15px;
+  transition: 250ms ease;
+}
+
+.update-tooltip-progress-content {
+  height: 50px;
+  margin: 0;
+  padding: 0;
+  background-color: var(--secondary-color);
+  border-radius: var(--roundness);
+  transition: 250ms ease;
+}
+
+.update-tooltip-progress-track {
+  position: relative;
+  width: 100%;
+  background-color: #212121;
+  height: 25px;
+  border-radius: var(--roundness);
+  transition: 250ms ease;
+  display: flex;
+  align-items: center;
+  align-content: center;
+  justify-content: start;
+  overflow: hidden;
 }
