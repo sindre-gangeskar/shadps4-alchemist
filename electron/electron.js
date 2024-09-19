@@ -169,7 +169,7 @@ ipcMain.on('initiate-download', async (event) => {
         autoUpdater.removeAllListeners('download-progress');
         autoUpdater.removeAllListeners('update-downloaded');
 
-        event.sender.send('initiate-download', { message: 'Initializing download...' });
+        event.sender.send('initiate-download', { message: 'Initializing...' });
 
         autoUpdater.on('download-progress', (progress) => {
             event.sender.send('initiate-download', { type: 'progress', message: `Downloading ${progress.percent.toFixed(1)}%`, progress: progress.percent });
