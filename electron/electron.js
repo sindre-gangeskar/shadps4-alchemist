@@ -5,8 +5,9 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 import toml from '@iarna/toml';
-import autoUpdater from './autoUpdater.js';
-
+import updatesChecker from './updatesChecker.js';
+import pkg from "electron-updater";
+const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dataFilePath = path.join(app.getPath('appData'), 'shadPS4 Alchemist');
@@ -203,14 +204,30 @@ ipcMain.on('fetch-games-in-library', async (event) => {
     event.sender.send('fetch-games-in-library', { games: config.games })
 })
 ipcMain.on('check-updates', async (event) => {
-    await autoUpdater.checkForUpdates();
-    console.log('Checking for updates');
-
-    event.sender.send('check-updates', { message: 'An update is available', updateAvailable: true });
+    try {
+        await updatesChecker.checkForUpdates(event);
+    } catch (error) {
+        sendMessage(event, error.message, 'UpdateErr', 500, 'error');
+        console.error(error);
+    }
 })
 ipcMain.on('initiate-download', async (event) => {
-    await autoUpdater.downloadUpdate(event);
-})
+    try {
+        autoUpdater.on('download-progress', (progress) => {
+            event.sender.send('initiate-download', { type: 'progress', message: `Downloading ${progress.percent.toFixed(2)}%`, progress: progress.percent });
+        });
+
+        autoUpdater.once('update-downloaded', () => {
+            event.sender.send('initiate-download', { type: 'complete', message: 'Update downloaded. Quit to install.' });
+            autoUpdater.quitAndInstall(false)
+        });
+        await autoUpdater.downloadUpdate();
+    } catch (error) {
+        console.error('Error during download:', error);
+        event.sender.send('initiate-download', { type: 'error', message: 'Error during update download', error: error.message });
+    }
+});
+
 
 /* Mods */
 ipcMain.on(`get-mods-directory`, async (event, id) => {

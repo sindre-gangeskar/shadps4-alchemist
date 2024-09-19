@@ -9,12 +9,8 @@
   "main": "electron/electron.js",
   "type": "module",
   "homepage": "./",
-  "private": true,
+  "private": false,
   "repository": "https://github.com/sindre-gangeskar/shadps4-alchemist",
-  "publish": {
-    "provider": "github",
-    "releaseType": "release"
-  },
   "dependencies": {
     "@iarna/toml": "^2.2.5",
     "@vitejs/plugin-react": "^4.3.1",
@@ -55,6 +51,12 @@
       "allowToChangeInstallationDirectory": true,
       "createStartMenuShortcut": true,
       "shortcutName": "shadPS4 Alchemist"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "sindre-gangeskar",
+      "repo": "shadps4-alchemist",
+      "private": false
     }
   },
   "eslintConfig": {

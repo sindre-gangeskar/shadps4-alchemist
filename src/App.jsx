@@ -13,6 +13,7 @@ import TitleBar from './partials/TitleBar';
 import Tooltip from './partials/Tooltip';
 import useGlobalStateStore from './js/globalStateStore';
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
+import VersionVisuals from './partials/VersionVisuals';
 
 function App() {
   const [ type, setType ] = useGlobalStateStore(state => [ state.type, state.setType ]);
@@ -157,6 +158,7 @@ function App() {
   }, [ screenWidth, screenHeight ])
   return (
     <>
+      <VersionVisuals />
       <UpdateChecker />
       <TitleBar />
       <Navbar />

@@ -19,7 +19,7 @@ function UpdateChecker() {
     }
   }, [])
 
-/* Set tooltip content when a message has been changed or set */
+  /* Set tooltip content when a message has been changed or set */
   useEffect(() => {
     setContent(
       <div className="tooltip-data">{message}<GoDownload className="download-icon" size={20} /></div>
@@ -27,12 +27,24 @@ function UpdateChecker() {
   }, [ message ])
 
 
-  const handleDownload = () => {
-    window.electron.send('initiate download');
+  const initializeDownload = () => {
+    window.electron.send('initiate-download');
+    console.log('Initiated update download');
   }
 
+  useEffect(() => {
+    const handleDownload = (event, data) => {
+      if (data && data.message) {
+        setMessage(data.message);
+      }
+      console.log(data);
+    }
+    window.electron.on('initiate-download', handleDownload);
+    return () => { window.electron.removeListener('initiate-download', handleDownload) };
+  }, [])
+
   return (
-    <UpdateTooltip content={content} visible={!!content} onClick={handleDownload} />
+    <UpdateTooltip content={content} visible={!!message} onClick={initializeDownload} />
   )
 }
 
