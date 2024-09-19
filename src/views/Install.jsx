@@ -345,7 +345,7 @@ function Install() {
 			{!games || games?.length === 0 ?
 				<div className="dialog-wrapper">
 					<p className="message">No games library found</p>
-					<button className="btn initialize" onClick={initializeLibrary}>Select Games Directory</button>
+					<button className="btn initialize" onClick={initializeLibrary}>Setup</button>
 				</div>
 				:
 				<>
