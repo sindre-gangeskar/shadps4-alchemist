@@ -2,7 +2,7 @@
   --roundness: 1.5rem;
 }
 
-.tooltip-wrapper {
+.update-tooltip-wrapper-parent {
   display: flex;
   min-width: 300px;
   width: 100%;
@@ -11,6 +11,11 @@
   gap: 15px;
   align-items: center;
   font-weight: bold;
+  position: absolute;
+  bottom: 0;
+  margin: 20px auto;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .update-tooltip-wrapper {
@@ -25,14 +30,12 @@
   justify-content: space-between;
   align-items: center;
   font-weight: bolder;
-  bottom: 0;
-  margin: 10px;
   transition: 250ms ease;
   cursor: pointer;
   outline: 2px solid #00000000;
 }
 
-.update-tooltip-wrapper:hover{
+.update-tooltip-wrapper:hover {
   background-color: var(--secondary-color);
   color: white;
   outline: 2px solid white;

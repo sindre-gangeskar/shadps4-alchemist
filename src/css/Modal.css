@@ -27,10 +27,6 @@
     border-radius: 0.5rem;
 }
 
-.modal-wrapper.show {
-    box-shadow: 0px 20px 80px var(--shadow);
-}
-
 .modal-header-wrapper {
     width: 100%;
     background-color: black;

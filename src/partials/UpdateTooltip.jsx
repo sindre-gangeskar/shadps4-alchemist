@@ -12,7 +12,7 @@ function UpdateTooltip({ content, visible, progress, onClick, isDownloading }) {
 
   return (
     <>
-      <div className={`tooltip-wrapper ${visible ? 'show' : 'hide'}`}>
+      <div className={`update-tooltip-wrapper-parent ${visible ? 'show' : 'hide'}`}>
         {!isDownloading ?
           <div className={`update-tooltip-wrapper`} onClick={onClick}>
             {content}
