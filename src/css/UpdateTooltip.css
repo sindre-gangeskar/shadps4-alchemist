@@ -64,10 +64,11 @@
   flex-direction: row;
   background-color: white;
   border-radius: var(--roundness);
-  padding: 15px;
+  padding: 10px;
   color: black;
   gap: 15px;
   transition: 250ms ease;
+  font-size: 0.8rem;
 }
 
 .update-tooltip-progress-content {
