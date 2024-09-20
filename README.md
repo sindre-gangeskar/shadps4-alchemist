@@ -22,13 +22,13 @@ Please see the releases section.
 
 ### How does it work in terms of installing mods? 
 - It renames the original file to keep things non-destructive with a prefix of an underscore "_". 
-- It proceeds to create hardlinks for each file and place them where the original file is located with the same name as the original file without the prefix of "_" making it seem like it is the original file and shadPS4 will register that as the file to read
+- It proceeds to create a hard link for each file and places them where the originals are located with the same name as the original without the prefix of "_"
 
 ### What is a hardlink?
-- A hardlink is a pointer to a file that is located elsewhere on the same drive, essentially a "shortcut"
+- A hard link is a pointer to a file that is located elsewhere, essentially a "shortcut"
 - shadPS4 Alchemist does **not** copy over each file from the mod directory, but it creates links for each file instead
-- A hardlink takes no extra space on your drive. The folder may appear larger, but the actual available drive space won’t decrease beyond the size of the mod files.
-- **Making any modification to the mod file will reflect upon the link that is placed in the game's folder as well** (When said mod is enabled in shadPS4 Alchemist)
+- A hard link does not take any more space, the folder may seem to be larger in size, but your actual drive's available space should not shrink any more than 
+what the mod files themselves take. 
 
 ## Discord
 If you wish to test or just follow the progress of the project, consider joining the Discord server by 
