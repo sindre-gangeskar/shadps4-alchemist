@@ -22,7 +22,7 @@ Please see the releases section.
 
 ### How does it work in terms of installing mods? 
 - It renames the original file to keep things non-destructive with a prefix of an underscore "_". 
-- It proceeds to create hardlinks for each file and place them where the original file is located with the same name as the original file without the prefix of "_"
+- It proceeds to create hardlinks for each file and place them where the original file is located with the same name as the original file without the prefix of "_" making it seem like it is the original file and shadPS4 will register that as the file to read
 
 ### What is a hardlink?
 - A hardlink is a pointer to a file that is located elsewhere on the same drive, essentially a "shortcut"
