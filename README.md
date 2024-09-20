@@ -24,4 +24,4 @@ Please see the releases section.
 If you wish to test or just follow the progress of the project, consider joining the Discord server by 
 clicking [here](https://discord.gg/XydC82W6u2).
 
-You can choose to become a Tester by assigning yourself that role in **Channels & Roles** and provide valuable feedback and bug reports.
+You can choose to become a Tester by assigning yourself that role in **Channels & Roles** and provide valuable feedback, bug reports and receive troubleshooting support should any issues arise.
