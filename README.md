@@ -27,7 +27,8 @@ Please see the releases section.
 ### What is a hardlink?
 - A hardlink is a pointer to a file that is located elsewhere on the same drive, essentially a "shortcut"
 - shadPS4 Alchemist does **not** copy over each file from the mod directory, but it creates links for each file instead
-- A hardlink does not take any more space, the folder may seem to be larger in size, but your actual drive's available space should not shrink any more than what the mod files themselves take. 
+- A hardlink takes no extra space on your drive. The folder may appear larger, but the actual available drive space won’t decrease beyond the size of the mod files.
+- **Making any modification to the mod file will reflect upon the link that is placed in the game's folder as well** (When you enable the mod in shadPS4 Alchemist)
 
 ## Discord
 If you wish to test or just follow the progress of the project, consider joining the Discord server by 
