@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import '../css/Options.css';
+import '../css/Settings.css';
 import useGlobalStateStore from "../js/globalStateStore";
 import { IoIosRefresh } from "react-icons/io";
-function Options() {
+function Settings() {
     const [ shadPS4Location, setShadPS4Location ] = useState(null)
     const [ libraryDirectory, setLibraryDirectory ] = useState(null);
     const [ modsDirectory, setModsDirectory ] = useState(null);
@@ -80,4 +80,4 @@ function Options() {
     )
 }
 
-export default Options;
+export default Settings;
