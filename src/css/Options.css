@@ -9,22 +9,65 @@
     overflow-y: auto;
     gap: 25px;
     margin: auto;
+    background-color: #0000008e;
 }
 
-.option{
+.option {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    background-color: var(--primary-color);
+    padding: 25px;
+    border-radius: 0.5rem;
 }
 
-.path{
-    text-align: start;
-    min-width: 250px;
+.option-category {
+    text-align: center;
+    background-color: var(--primary-color);
+    padding: 25px;
+    border-radius: 0.5rem;
 }
-.name{
-    text-align: end;
+
+.path {
+    position: relative;
+    min-width: 250px;
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    padding-right: 30px;
+    
+}
+
+.name {
     min-width: 250px;
 }
 
 .bold {
     font-weight: 800;
+}
+
+.option-btn {
+    right: 0;
+    position: absolute;
+    background-color: white;
+    color: black;
+    margin: -15px;
+}
+
+.btn.reset {
+    position: absolute;
+    background-color: white;
+    color: black;
+    padding: 15px;
+    height: 50px;
+    margin: 15px auto;
+    font-size: 1.2rem;
+    bottom: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.btn.reset:hover{
+    background-color: red;
+    color: white;
 }

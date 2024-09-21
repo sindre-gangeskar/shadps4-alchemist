@@ -9,9 +9,11 @@ function UpdateChecker() {
   const [ isDownloading, setIsDownloading ] = useState(false);
   useEffect(() => {
     const handleUpdateCheck = (event, data) => {
-      if (data && data.updateAvailable) {
+      if (data && data.updateAvailable && data.type !== 'error') {
         setMessage(data.message);
       }
+      if (data.type === 'error')
+        console.error(data.message);
     }
     window.electron.send('check-updates');
     window.electron.on('check-updates', handleUpdateCheck);
