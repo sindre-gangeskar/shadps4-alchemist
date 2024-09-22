@@ -2,7 +2,7 @@
 
 ##### Hotfix
 
-* Fixed an issue that prevented non-conflicting mods from working (potentially)
+* Fixed an issue that prevented non-conflicting mods from working - throwing a conflict error even though there were no conflicts (potentially)
 
 #### 0.0.2 (2024-09-22)
 
