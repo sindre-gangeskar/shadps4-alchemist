@@ -580,6 +580,7 @@ function getGamesInDirectory(gamesDirectory) {
     })
     if (games) return games;
 }
+
 async function saveConfig(data, filePath) {
     await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
 }
