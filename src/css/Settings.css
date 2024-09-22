@@ -1,0 +1,80 @@
+.settings-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    height: 100vh;
+    width: 100%;
+    max-width: 800px;
+    overflow-y: auto;
+    gap: 25px;
+    margin: auto;
+    background-color: var(--primary-color)
+}
+
+.setting-title{
+    margin: 10px auto;
+    border-bottom: 1px solid var(--secondary-color);
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+}
+
+.setting {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--primary-color);
+    padding: 25px;
+    border-radius: 0.5rem;
+}
+
+.setting-category {
+    text-align: center;
+    background-color: var(--primary-color);
+    padding: 25px;
+    border-radius: 0.5rem;
+}
+
+.path {
+    position: relative;
+    min-width: 250px;
+    width: fit-content;
+    display: flex;
+    align-items: center;
+    padding-right: 30px;
+    
+}
+
+.name {
+    min-width: 250px;
+}
+
+.bold {
+    font-weight: 800;
+}
+
+.setting-btn {
+    right: 0;
+    position: absolute;
+    color: var(--secondary-color);
+    margin: -15px;
+}
+
+.option-btn:hover{
+    color: white;
+}
+
+.btn.reset {
+    background-color: white;
+    color: black;
+    padding: 15px;
+    height: 50px;
+    margin: 15px auto;
+    font-size: 1.2rem;
+}
+
+.btn.reset:hover{
+    background-color: red;
+    color: white;
+}

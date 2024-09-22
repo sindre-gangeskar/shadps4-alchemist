@@ -6,7 +6,6 @@ import { Routes, Route, useNavigate } from 'react-router-dom'
 import UpdateChecker from './partials/UpdateChecker';
 import Install from './views/Install';
 import Navbar from './partials/Navbar';
-import Options from './views/Options';
 import Create from './views/Create';
 import ProcessActive from './views/ProcessActive';
 import TitleBar from './partials/TitleBar';
@@ -14,6 +13,7 @@ import Tooltip from './partials/Tooltip';
 import useGlobalStateStore from './js/globalStateStore';
 import { FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import VersionVisuals from './partials/VersionVisuals';
+import Settings from './views/Settings';
 
 function App() {
   const [ type, setType ] = useGlobalStateStore(state => [ state.type, state.setType ]);
@@ -165,8 +165,8 @@ function App() {
       <Tooltip content={tooltipContent} visible={tooltipVisible} type={type} />
 
       <Routes>
-        <Route path='/options' key={'/options'} element={
-          <Options key={'options'}></Options>
+        <Route path='/settings' key={'/settings'} element={
+          <Settings key={'settings'}></Settings>
         }></Route>
         <Route path='/' key={'/library'} element={
           <Install key={'library'} />

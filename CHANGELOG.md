@@ -1,3 +1,9 @@
+#### 0.0.1 (2024-09-21)
+
+##### New Features
+
+*  Added the ability to change the different locations of your mod and game locations after initial setup (a900a1fc)
+
 #### 0.0.1 (2024-09-19)
 
 ##### New Features

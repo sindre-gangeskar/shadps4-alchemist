@@ -25,6 +25,18 @@
     align-items: center;
 }
 
+.library-wrapper::-webkit-scrollbar{
+    width: 10px;
+}
+.library-wrapper::-webkit-scrollbar-button{
+    height: 50px;
+}
+
+.library-wrapper::-webkit-scrollbar-thumb{
+    background-color: var(--secondary-color);
+    border-radius: 0.5rem;
+}
+
 .card-wrapper {
     position: relative;
     width: 200px;
@@ -49,7 +61,7 @@
 
 .card-wrapper:hover::before {
     scale: 102%;
-    background-color: var(--tertiary-primary);
+    background-color: white;
 }
 
 .card-wrapper:hover {
@@ -117,4 +129,13 @@
 
 .btn.initialize:hover {
     transform: scale(104%);
+}
+
+.btn.refresh{
+    background-color: black;
+    margin: 10px;
+    outline: 1px solid #ffffff00;
+}
+.btn.refresh:hover{
+    outline: 1px solid white;
 }

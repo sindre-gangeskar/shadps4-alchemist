@@ -12,8 +12,8 @@ function TitleBar() {
             setTitleName('Library');
         if (location.pathname === '/create')
             setTitleName('Create A Mod');
-        if (location.pathname === '/options')
-            setTitleName('Options');
+        if (location.pathname === '/settings')
+            setTitleName('Settings');
 
     }, [ location ])
 
