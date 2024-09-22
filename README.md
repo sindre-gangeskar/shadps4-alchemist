@@ -17,7 +17,7 @@
 
 ### Under development
 A pre-release is out but it is bare-bones and meant for those who are willing to use as it is now and accepts that unexpected things can occur. 
-It has the core functionality in place, enabling and disabling mods is functional as well launching games through shadPS4 Alchemist. 
+It has the core functionality in place, enabling and disabling mods is functional as well as launching games through shadPS4 Alchemist. 
 Please see the releases section. 
 
 ### How does it work in terms of installing mods? 
