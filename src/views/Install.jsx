@@ -18,8 +18,6 @@ function Install() {
 	const [ modalContent, setModalContent ] = useState(null);
 	const [ modalOpen, setModalOpen ] = useState(false);
 	const [ selectedApp, setSelectedApp ] = useState(false);
-	const [ type, setType ] = useGlobalStateStore(state => [ state.type, state.setType ]);
-	const [ tooltipVisible, setToolTipVisible ] = useGlobalStateStore(state => [ state.tooltipVisible, state.setToolTipVisible ]);
 
 	/* Settings */
 	const [ fullscreen, setFullscreen ] = useGlobalStateStore(state => [ state.fullscreen, state.setFullscreen ]);
@@ -109,17 +107,14 @@ function Install() {
 			}
 		}
 
-		if (!games) {
-			window.electron.send('fetch-games-in-library');
-		}
+		window.electron.send('fetch-games-in-library');
 		window.electron.on('fetch-games-in-library', handleLibraryRefresh);
-		return () => { window.electron.removeListener('fetch-games-in-library', handleLibraryRefresh) }
+		return () => { window.electron.removeAllListeners('fetch-games-in-library') }
 	}, [])
 
 	/* Set available mods and fetch their current states for selected app from IPC */
 	useEffect(() => {
 		if (selectedApp && selectedApp.id) {
-			/* Send request to */
 			window.electron.send(`get-mods-directory`, selectedApp.id)
 			window.electron.send('mod-state', selectedApp.id);
 
@@ -137,7 +132,7 @@ function Install() {
 			/* Response from IPC from fetch request */
 			window.electron.on(`check-mods`, modsStateListener)
 			window.electron.on(`mods-${selectedApp.id}`, modsDirectoryListener)
-			/* Remove listeners after they've been attached */
+
 			return () => {
 				window.electron.on(`check-mods`, modsStateListener)
 				window.electron.removeListener(`mods-${selectedApp.id}`, modsDirectoryListener);
@@ -349,7 +344,7 @@ function Install() {
 				</div>
 				:
 				<>
-					<button className="btn refresh" onClick={refreshLibrary}>Refresh Library</button>
+					<button className="btn refresh" onClick={refreshLibrary}>Refresh</button>
 					<GamesWrapper content={games} select={handleSelectedApp} />
 				</>
 			}

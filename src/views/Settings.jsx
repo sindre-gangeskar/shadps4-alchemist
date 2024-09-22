@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { LuFolderEdit } from "react-icons/lu";
 import '../css/Settings.css';
-import useGlobalStateStore from "../js/globalStateStore";
-import { IoIosRefresh } from "react-icons/io";
 function Settings() {
     const [ shadPS4Location, setShadPS4Location ] = useState(null)
     const [ libraryDirectory, setLibraryDirectory ] = useState(null);
@@ -55,26 +54,26 @@ function Settings() {
 
     return (
         <>
-            <div className="options-wrapper">
-                <div className="option">
+            <div className="settings-wrapper">
+                <div className="setting">
                     <p className="bold name">shadPS4 Location</p>
                     <p className="path">{shadPS4Location ? shadPS4Location : 'No shadPS4.exe location specified'}
-                        <button className="btn option-btn" onClick={setShadPS4}><IoIosRefresh size={15} /></button>
+                        <button className="btn setting-btn" onClick={setShadPS4}><LuFolderEdit size={20} /></button>
                     </p>
                 </div>
-                <div className="option">
+                <div className="setting">
                     <p className="bold name">Games Location</p>
                     <p className="path">{libraryDirectory ? libraryDirectory : 'No library directory specified'}
-                        <button className="btn option-btn" onClick={setGames}><IoIosRefresh size={15} /></button>
+                        <button className="btn setting-btn" onClick={setGames}><LuFolderEdit size={20} /></button>
                     </p>
                 </div>
-                <div className="option">
+                <div className="setting">
                     <p className="bold name">Mods Location</p>
                     <p className="path">{modsDirectory ? modsDirectory : 'No mods directory specified'}
-                        <button className="btn option-btn" onClick={setMods}><IoIosRefresh className="option-btn-icon" size={15} /></button>
+                        <button className="btn setting-btn" onClick={setMods}><LuFolderEdit className="setting-btn-icon" size={20} /></button>
                     </p>
                 </div>
-                <button className="btn reset" onClick={reinitialize}>Reinitialize Setup</button>
+                <button className="btn reset" onClick={reinitialize}>Reset Configuration</button>
             </div>
         </>
     )

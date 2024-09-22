@@ -1,4 +1,4 @@
-.options-wrapper {
+.settings-wrapper {
     position: relative;
     display: flex;
     flex-direction: column;
@@ -9,10 +9,18 @@
     overflow-y: auto;
     gap: 25px;
     margin: auto;
-    background-color: #0000008e;
+    background-color: var(--primary-color)
 }
 
-.option {
+.setting-title{
+    margin: 10px auto;
+    border-bottom: 1px solid var(--secondary-color);
+    width: 100%;
+    text-align: center;
+    padding: 10px;
+}
+
+.setting {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -21,7 +29,7 @@
     border-radius: 0.5rem;
 }
 
-.option-category {
+.setting-category {
     text-align: center;
     background-color: var(--primary-color);
     padding: 25px;
@@ -46,25 +54,24 @@
     font-weight: 800;
 }
 
-.option-btn {
+.setting-btn {
     right: 0;
     position: absolute;
-    background-color: white;
-    color: black;
+    color: var(--secondary-color);
     margin: -15px;
 }
 
+.option-btn:hover{
+    color: white;
+}
+
 .btn.reset {
-    position: absolute;
     background-color: white;
     color: black;
     padding: 15px;
     height: 50px;
     margin: 15px auto;
     font-size: 1.2rem;
-    bottom: 15%;
-    left: 50%;
-    transform: translateX(-50%);
 }
 
 .btn.reset:hover{

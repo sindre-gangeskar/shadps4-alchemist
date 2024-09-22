@@ -80,8 +80,7 @@ ipcMain.on('open-file-dialog', async (event) => {
             games: games
         }
 
-        const gamesDirectory = config.games_path;
-        const gamesAvailable = fs.readdirSync(config.games_path).filter(x => x.startsWith('CUSA')); // Make sure all directories start with CUSA
+
         getGamesInDirectory(config.games_path);
 
         /*  gamesAvailable.forEach(directory => {
@@ -109,7 +108,7 @@ ipcMain.on('open-file-dialog', async (event) => {
 
         else {
             const error = {
-                message: 'All directories must be on the same drive',
+                message: 'Ensure the Games and Mods directories are on the same drive',
                 name: 'InvalidDrivesError',
                 code: 400
             };
@@ -119,7 +118,6 @@ ipcMain.on('open-file-dialog', async (event) => {
     }
 })
 ipcMain.on('open-in-explorer', async (event, data) => {
-    BrowserWindow.getFocusedWindow().center();
     try {
         const pathExists = (path) => {
             const exists = fs.existsSync(path);
@@ -593,7 +591,6 @@ function getGamesInDirectory(gamesDirectory) {
             }
         }
     })
-    /*   saveConfig(config, path.join(dataFilePath, 'config.json')); */
     if (games) return games;
 }
 async function saveConfig(data, filePath) {
@@ -608,7 +605,7 @@ async function parseJSON(pathToFile, json) {
 }
 async function getGamesInLibrary(config) {
     const gamesDirectory = config.games_path;
-    const gamesAvailable = await fs.promises.readdir(gamesDirectory).filter(x => x.startsWith('CUSA')); // Make sure all directories start with CUSA
+    const gamesAvailable = fs.readdirSync(gamesDirectory).filter(x => x.startsWith('CUSA')); // Make sure all directories start with CUSA
 
     gamesAvailable.forEach(directory => {
         const sfoExists = fs.existsSync(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo'));
