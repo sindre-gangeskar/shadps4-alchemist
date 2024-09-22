@@ -1,5 +1,10 @@
 #### 0.0.2 (2024-09-22)
 
+##### Hotfix
+* Fixed an issue that prevented non-conflicting mods from working (potentially)
+
+#### 0.0.2 (2024-09-22)
+
 ##### New Features
 
 *  Added the ability to change the different locations of your mod and game locations after initial setup (a900a1fc)
