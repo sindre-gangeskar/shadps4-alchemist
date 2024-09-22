@@ -1,6 +1,7 @@
 #### 0.0.2 (2024-09-22)
 
 ##### Hotfix
+
 * Fixed an issue that prevented non-conflicting mods from working (potentially)
 
 #### 0.0.2 (2024-09-22)
