@@ -7,6 +7,9 @@ import { spawn } from 'child_process';
 import toml from '@iarna/toml';
 import updatesChecker from './updatesChecker.js';
 import pkg from "electron-updater";
+import { Candy } from 'candy-log';
+
+const c = new Candy();
 const { autoUpdater } = pkg;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -82,21 +85,6 @@ ipcMain.on('open-file-dialog', async (event) => {
 
 
         getGamesInDirectory(config.games_path);
-
-        /*  gamesAvailable.forEach(directory => {
-             const sfoExists = fs.existsSync(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo'));
-             const binExists = fs.existsSync(path.join(gamesDirectory, directory, 'eboot.bin'));
-             if (sfoExists && binExists) { // Game must have a .sfo and eboot.bin file in order to be seen as a game available to play and be added to the library
-                 const sfo = fs.readFileSync(path.normalize(path.join(gamesDirectory, directory, 'sce_sys', 'param.sfo')));
-                 const icon = path.normalize(path.join(gamesDirectory, directory, 'sce_sys', 'icon0.png'));
-                 if (sfoExists) {
-                     const game = parseSFO(sfo);
-                     if (!games.some(x => x.id === game.id)) { // Add game only if the games list doesn't already have an identical game based on the ID provided
-                         games.push({ title: game.title, appVersion: game.appVer, id: game.id, icon: icon, path: `${gamesDirectory}/${directory}` });
-                     }
-                 }
-             }
-         }) */
 
         // Save and send data to rendering client
         const paths = [ config.games_path, config.mods_path ];
@@ -285,8 +273,6 @@ ipcMain.on('disable-mod', async (event, data) => {
         const initialData = parseInitialModData(event, data);
         const fileData = JSON.parse(fs.readFileSync(initialData.modConfigPath, 'utf-8'));
 
-        console.log(fileData);
-
         /* Initialize mod object */
         const mod = { modName: data.modName, enabled: false };
         const absoluteModsPath = `${initialData.modsDir}/${mod.modName}`;
@@ -304,6 +290,7 @@ ipcMain.on('disable-mod', async (event, data) => {
             await saveConfig(fileData, initialData.modConfigPath);
             sendMessage(event, data.modName, 'Successfully Disabled Mod', 200, 'success');
             event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
+
         }
         else sendMessage(event, 'An error occurred while attempting to disable mod', 'UnknownDisableErr', 500, 'error');
     } catch (error) {
@@ -626,48 +613,49 @@ async function getGamesInLibrary(config) {
     await saveConfig(config, `${dataFilePath}/config.json`);
 }
 async function enableModForGame(fullGamePath, mod, modName, appId, event) {
+    let conflict = false;
+    const modFilesToLink = mod;
+    const originalFiles = [];
+    const originalFilesToRename = getGameRootDir(fullGamePath, appId, originalFiles, mod)
     try {
-        const modFilesToLink = mod;
-        const originalFiles = [];
-
-        const originalFilesToRename = getGameRootDir(fullGamePath, appId, originalFiles, mod)
-        let conflict = false;
-        /* Rename original file */
+        /* Check for conflicts */
         for (const file of originalFilesToRename) {
-            const originalFile = `${file.fullPath}\\${file.file}`
             const conflictedFile = await fs.promises.access(`${file.fullPath}\\_${file.file}`).then(() => true).catch(() => false);
             console.log('Conflicted file found:', conflictedFile);
             if (conflictedFile) {
-                console.log('Conflict detected');
+                c.error('Conflict detected');
                 conflict = true;
                 break;
             }
+        }
+        /* If there's a conflict, do nothing */
+        if (conflict) return false;
+
+        /* Rename original file */
+        for (const file of originalFilesToRename) {
+            const originalFile = `${file.fullPath}\\${file.file}`
             const renamedFile = `${file.fullPath}\\_${file.file}`
             await fs.promises.rename(originalFile, renamedFile);
-            console.log('Renaming...', originalFile, renamedFile);
+            c.success(`Renaming... ${originalFile} -> ${renamedFile}`);
         }
 
-        if (conflict) {
-            return false;
-        }
-        else {
-            /* Link mod files to game directory */
-            for (const file of modFilesToLink) {
-                const modLinkPath = `${file.fullPath}\\${file.file}`;
-                const originalFileObject = originalFiles.find(x => x.fullPath && x.file === file.file)
-                const originalFileLinkPath = `${originalFileObject.fullPath}\\${originalFileObject.file}`;
+        /* Link mod files to game directory */
+        for (const file of modFilesToLink) {
+            const originalFileObject = originalFiles.find(x => x && x.fullPath && x.file === file.file)
+            let originalFileLinkPath;
+            if (originalFileObject)
+                originalFileLinkPath = path.join(originalFileObject.fullPath, originalFileObject.file);
+            else continue;
 
-                const isRenamed = await fs.promises.access(`${originalFileObject.fullPath}\\_${originalFileObject.file}`).then(() => true).catch(() => false);
-                const fileToLink = `${file.fullPath}\\${file.file}`
+            const isRenamed = await fs.promises.access(`${originalFileObject.fullPath}\\_${originalFileObject.file}`).then(() => true).catch(() => false);
+            const fileToLink = `${file.fullPath}\\${file.file}`
 
-                if (isRenamed) {
-                    await fs.promises.link(modLinkPath, originalFileLinkPath);
-                }
-                console.log(isRenamed);
-                console.log('Mod file to link to directory: ', fileToLink);
+            if (isRenamed) {
+                c.warning(`Linking... ${fileToLink} -> ${originalFileLinkPath}`);
+                await fs.promises.link(fileToLink, originalFileLinkPath);
             }
-            return true;
         }
+        return true;
     } catch (error) {
         console.error(error);
         return false;
@@ -701,6 +689,7 @@ async function disableModForGame(fullGamePath, mod, modName, appId, event) {
     for (const file of filtered) {
         const fullFilePathToLink = path.join(file.fullPath, file.file.replace('_', ''));
         if (fullFilePathToLink) {
+            c.warning(`Unlinking... ${fullFilePathToLink}`)
             await fs.promises.unlink(fullFilePathToLink);
         }
         else {
