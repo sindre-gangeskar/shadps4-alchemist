@@ -18,6 +18,8 @@
     max-height: 80vh;
     justify-content: space-around;
     padding-bottom: 150px;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 
 .library-wrapper:has(.card-wrapper) {
