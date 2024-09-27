@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { useEffect, useState } from "react";
 import '../css/Install.css';
 import useGlobalStateStore from "../js/globalStateStore";
@@ -6,19 +6,21 @@ import { IoIosFolderOpen } from "react-icons/io";
 import GamesWrapper from "../partials/GamesWrapper";
 import Modal from '../partials/Modal';
 import ToggleButton from '../partials/ToggleButton';
+import Search from "../partials/Search";
 import { FaFaceFrown } from "react-icons/fa6";
-
 function Install() {
 	const [ setLibraryDirectory ] = useGlobalStateStore(state => [ state.setLibraryDirectory ]);
 	const [ setShadPS4Location ] = useGlobalStateStore(state => [ state.setShadPS4Location ]);
 	const [ setModsDirectory ] = useGlobalStateStore(state => [ state.setModsDirectory ]);
 
 	const [ games, setGames ] = useState([]);
+	const [ filteredGames, setFilteredGames ] = useState(null);
+	const [ searchTerm, setSearchTerm ] = useState('');
 	const [ updated, setUpdated ] = useState(false);
 	const [ modalContent, setModalContent ] = useState(null);
 	const [ modalOpen, setModalOpen ] = useState(false);
 	const [ selectedApp, setSelectedApp ] = useState(false);
-
+	const [ isGrid, setIsGrid ] = useState(true);
 	/* Settings */
 	const [ fullscreen, setFullscreen ] = useGlobalStateStore(state => [ state.fullscreen, state.setFullscreen ]);
 	const [ isPS4Pro, setIsPS4Pro ] = useGlobalStateStore(state => [ state.isPS4Pro, state.setIsPS4Pro ]);
@@ -36,6 +38,9 @@ function Install() {
 	const heightSettingRef = useRef(null);
 	const widthSettingRef = useRef(null);
 	const vBlankDividerRef = useRef(null);
+	const searchInputRef = useRef(null);
+
+
 
 	const initializeLibrary = () => {
 		window.electron.send('open-file-dialog');
@@ -83,8 +88,14 @@ function Install() {
 		window.electron.send('disable-mod', ({ modName: data.modName, id: data.id }));
 	}
 
-	const refreshLibrary = () => {
-		window.electron.send('fetch-games-in-library');
+	const toggleView = () => {
+		isGrid ? setIsGrid(false) : setIsGrid(true);
+	}
+
+	const resetSearch = () => {
+		setSearchTerm('');
+		if (searchInputRef.current)
+			searchInputRef.current.value = '';
 	}
 
 	const toggleValue = (value, setState) => {
@@ -104,6 +115,7 @@ function Install() {
 			if (data && data.games) {
 				console.log('Games data:', data);
 				setGames(data.games);
+				setFilteredGames(data.games);
 			}
 		}
 
@@ -334,6 +346,17 @@ function Install() {
 		}
 	}, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods, fullscreen, showSplash, logType, isPS4Pro, vBlankDivider ])
 
+	useEffect(() => {
+		if (searchTerm)
+			setFilteredGames(games.filter(x => x.title.toLowerCase().replace('\u2122', '').startsWith(searchTerm.toLowerCase())));
+
+		if (searchTerm.length === 0) {
+			setFilteredGames(games);
+		}
+	}, [ searchTerm ])
+
+
+
 	return (
 		<>
 			<Modal content={modalContent} show={modalOpen} />
@@ -344,8 +367,8 @@ function Install() {
 				</div>
 				:
 				<>
-					<button className="btn refresh" onClick={refreshLibrary}>Refresh</button>
-					<GamesWrapper content={games} select={handleSelectedApp} />
+					<Search reset={resetSearch} inputRef={searchInputRef} onChange={(e) => { setSearchTerm(e.target.value)}} toggleGrid={toggleView} isGrid={isGrid} />
+					<GamesWrapper content={filteredGames} select={handleSelectedApp} isGrid={isGrid} />
 				</>
 			}
 		</>
