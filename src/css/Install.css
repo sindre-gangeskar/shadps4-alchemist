@@ -8,23 +8,34 @@
 }
 
 .library-wrapper {
+    position: relative;
     display: grid;
     gap: 10px;
     grid-template-columns: repeat(auto-fit, minmax(200px, 0fr));
+    overflow-y: scroll;
+    width: 100vw;
+    height: auto;
+    max-height: 80vh;
+    justify-content: start;
+    margin: 0;
+    padding-top: 15px;
+    padding-bottom: 150px;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+.library-wrapper:has(.card-wrapper) {
     justify-content: center;
-    overflow-y: auto;
-    height: 100%;
-    padding: 100px;
 }
 
 .library-wrapper.list {
+    position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
     width: 100%;
-    gap: 0;
-    padding: 15px;
-    margin: 75px auto;
+    gap: 0px;
+    height: 80vh;
+    overflow-y: scroll;
+    justify-content: start;
 }
 
 .library-wrapper::-webkit-scrollbar {

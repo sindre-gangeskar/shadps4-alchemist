@@ -1,3 +1,13 @@
+#### 0.1.0-alpha (2024-09-27)
+
+##### New Features
+
+*  Added search functionality, improved grid view and added a list view (c210305b)
+
+##### Code Style Changes
+
+*  Updated logo and icon (a9f1ac58)
+
 #### 0.0.2 (2024-09-22)
 
 ##### Hotfix

@@ -28,10 +28,15 @@ function TitleBar() {
         window.electron.minimizeWindow();
     }
 
+
     return (
         <>
             <div className="title-bar-wrapper">
-            <div className="title-location" key={location}>{titleName}</div>
+                <div className="title-logo-wrapper">
+                    <img className="title-logo-icon" src="./assets/images/shadps4-alchemist-icon.png" alt="logo" />
+                    <div className="title-name">shadPS4 Alchemist</div>
+                </div>
+                <div className="title-location" key={location}>{titleName}</div>
                 <div className="title-bar-controls">
                     <button className="btn minimize" onClick={minimizeWindow}><VscChromeMinimize /></button>
                     <button className="btn maximize" onClick={maximizeWindow}>{maximized ? <VscChromeRestore /> : <VscChromeMaximize />}</button>

@@ -20,7 +20,8 @@ function Install() {
 	const [ modalContent, setModalContent ] = useState(null);
 	const [ modalOpen, setModalOpen ] = useState(false);
 	const [ selectedApp, setSelectedApp ] = useState(false);
-	const [ isGrid, setIsGrid ] = useState(true);
+	const [ isGrid, setIsGrid ] = useState(null);
+	const [ viewTypeChanged, setViewTypeChanged ] = useState(false);
 	/* Settings */
 	const [ fullscreen, setFullscreen ] = useGlobalStateStore(state => [ state.fullscreen, state.setFullscreen ]);
 	const [ isPS4Pro, setIsPS4Pro ] = useGlobalStateStore(state => [ state.isPS4Pro, state.setIsPS4Pro ]);
@@ -45,7 +46,6 @@ function Install() {
 	const initializeLibrary = () => {
 		window.electron.send('open-file-dialog');
 	}
-
 	const bootGame = () => {
 		let width = widthSettingRef.current.value;
 		let height = heightSettingRef.current.value;
@@ -63,46 +63,37 @@ function Install() {
 
 		console.log(heightSettingRef.current.value, widthSettingRef.current.value);
 	}
-
 	const revealInExplorer = (app, type) => {
 		console.log(app, type);
 		window.electron.send('open-in-explorer', { data: app, type: type });
 	}
-
 	const handleSelectedApp = (app) => {
 		setSelectedApp(app);
 		setTimeout(() => {
 			setModalOpen(true);
 		}, 100);
 	}
-
 	const closeModal = () => {
 		setModalOpen(false);
 	}
-
 	const enableMod = (data) => {
 		window.electron.send('enable-mod', ({ modName: data.modName, id: data.id }))
 	}
-
 	const disableMod = (data) => {
 		window.electron.send('disable-mod', ({ modName: data.modName, id: data.id }));
 	}
-
 	const toggleView = () => {
 		isGrid ? setIsGrid(false) : setIsGrid(true);
 	}
-
 	const resetSearch = () => {
 		setSearchTerm('');
 		if (searchInputRef.current)
 			searchInputRef.current.value = '';
 	}
-
 	const toggleValue = (value, setState) => {
 		value = !value;
 		setState(value);
 	}
-
 	const toggleLogType = (logType, setLogType) => {
 		if (logType === "async")
 			setLogType("sync")
@@ -122,6 +113,21 @@ function Install() {
 		window.electron.send('fetch-games-in-library');
 		window.electron.on('fetch-games-in-library', handleLibraryRefresh);
 		return () => { window.electron.removeAllListeners('fetch-games-in-library') }
+	}, [])
+
+	/* Get view type */
+	useEffect(() => {
+		const handleGetView = (event, data) => {
+			console.log(data);
+			if (data && data.isGrid) {
+				setIsGrid(data.isGrid);
+				setViewTypeChanged(true);
+			}
+		}
+		window.electron.send('get-view');
+		window.electron.on('get-view', handleGetView);
+		setViewTypeChanged(false);
+		return () => { window.electron.removeAllListeners('get-view', handleGetView) };
 	}, [])
 
 	/* Set available mods and fetch their current states for selected app from IPC */
@@ -355,6 +361,15 @@ function Install() {
 		}
 	}, [ searchTerm ])
 
+	useEffect(() => {
+		const updateView = () => {
+			if (isGrid !== null) {
+				console.log(viewTypeChanged)
+				window.electron.send('update-view', { isGrid: isGrid });
+			}
+		}
+		updateView();
+	}, [ isGrid, viewTypeChanged ])
 
 
 	return (
@@ -367,7 +382,7 @@ function Install() {
 				</div>
 				:
 				<>
-					<Search reset={resetSearch} inputRef={searchInputRef} onChange={(e) => { setSearchTerm(e.target.value)}} toggleGrid={toggleView} isGrid={isGrid} />
+					<Search reset={resetSearch} inputRef={searchInputRef} onChange={(e) => { setSearchTerm(e.target.value) }} toggleGrid={toggleView} isGrid={isGrid} />
 					<GamesWrapper content={filteredGames} select={handleSelectedApp} isGrid={isGrid} />
 				</>
 			}

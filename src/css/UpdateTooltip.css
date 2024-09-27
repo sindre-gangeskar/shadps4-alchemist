@@ -16,6 +16,7 @@
   margin: 20px auto;
   left: 50%;
   transform: translateX(-50%);
+  z-index: 10;
 }
 
 .update-tooltip-wrapper {

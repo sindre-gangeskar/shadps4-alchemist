@@ -80,6 +80,7 @@ ipcMain.on('open-file-dialog', async (event) => {
             games_path: setGamesLibrary.filePaths[ 0 ],
             mods_path: setModsDirectory.filePaths[ 0 ],
             shadPS4Exe: shadPS4ExeFile,
+            isGrid: true,
             games: games
         }
 
@@ -222,6 +223,23 @@ ipcMain.on('initiate-download', async (event) => {
         event.sender.send('initiate-download', { message: 'Error during update download', error: error.message });
     }
 });
+ipcMain.on('update-view', async (event, data) => {
+    const config = await parseJSON(dataFilePath, 'config.json');
+    if (config) {
+        const updated = config;
+        if (data) {
+            updated.isGrid = data.isGrid;
+            await saveConfig(updated, `${dataFilePath}\\config.json`);
+        }
+    }
+})
+
+ipcMain.on('get-view', async (event) => {
+    const config = await parseJSON(dataFilePath, 'config.json');
+    const isGrid = config.isGrid;
+    if (isGrid !== undefined || isGrid !== null)
+        event.sender.send('get-view', { isGrid: isGrid });
+})
 
 /* Mods */
 ipcMain.on(`get-mods-directory`, async (event, id) => {
@@ -585,10 +603,14 @@ async function saveConfig(data, filePath) {
     await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
 }
 async function parseJSON(pathToFile, json) {
-    if (checkFileExists(pathToFile, json)) {
-        const data = JSON.parse(await fs.promises.readFile(path.join(pathToFile, json)));
-        console.log(data)
-        if (data) return data;
+    try {
+        if (checkFileExists(pathToFile, json)) {
+            const data = JSON.parse(await fs.promises.readFile(path.join(pathToFile, json)));
+            console.log(data)
+            if (data) return data;
+        }
+    } catch (error) {
+        console.error(error);
     }
 }
 async function getGamesInLibrary(config) {

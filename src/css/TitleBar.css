@@ -5,9 +5,28 @@
     height: 40px;
     align-content: center;
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
     z-index: 2;
     color: white;
+}
+
+.title-logo-wrapper {
+    left: 0;
+    width: fit-content;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 10px;
+}
+
+.title-logo-wrapper > .title-logo-icon{
+    width: 25px;
+    height: 25px;
+}
+.title-name{
+    font-weight: bolder;
+    font-size: 0.8rem;
 }
 
 .title-location {

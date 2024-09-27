@@ -1,7 +1,7 @@
 import '../css/VersionVisuals.css';
 function VersionVisuals() {
   return (
-    <p className="version">v0.0.2-alpha.1</p>
+    <p className="version">v0.1.0-alpha</p>
   )
 }
 export default VersionVisuals;
