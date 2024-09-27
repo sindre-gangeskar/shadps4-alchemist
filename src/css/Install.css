@@ -11,20 +11,17 @@
     position: relative;
     display: grid;
     gap: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 0fr));
+    grid-template-columns: repeat(auto-fit, minmax(200px, max-content));
     overflow-y: scroll;
     width: 100vw;
     height: auto;
     max-height: 80vh;
-    justify-content: start;
-    margin: 0;
-    padding-top: 15px;
+    justify-content: space-around;
     padding-bottom: 150px;
-    padding-left: 15px;
-    padding-right: 15px;
 }
+
 .library-wrapper:has(.card-wrapper) {
-    justify-content: center;
+    justify-content:center
 }
 
 .library-wrapper.list {

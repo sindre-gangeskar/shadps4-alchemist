@@ -113,6 +113,7 @@
 .card-wrapper.list:hover {
   background-color: #ffffff23;
 }
+
 .card-wrapper.list:active {
   background-color: #ffffff79;
 }
@@ -168,20 +169,12 @@
     height: 250px;
     width: 250px;
   }
-
-  .library-wrapper {
-    gap: 60px;
-  }
 }
 
 @media (min-width: 2300px) {
   .card-wrapper:not(.list) {
     height: 300px;
     width: 300px;
-  }
-
-  .library-wrapper {
-    gap: 120px;
   }
 }
 
