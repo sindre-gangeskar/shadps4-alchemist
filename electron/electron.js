@@ -671,12 +671,14 @@ async function enableModForGame(fullGamePath, mod, modName, appId, event) {
             else continue;
 
             const isRenamed = await fs.promises.access(`${originalFileObject.fullPath}\\_${originalFileObject.file}`).then(() => true).catch(() => false);
+            const exists = await fs.promises.access(`${originalFileObject.fullPath}\\${originalFileObject.file}`).then(() => true).catch(() => false);
             const fileToLink = `${file.fullPath}\\${file.file}`
 
-            if (isRenamed) {
+            if (isRenamed && !exists) {
                 c.warning(`Linking... ${fileToLink} -> ${originalFileLinkPath}`);
                 await fs.promises.link(fileToLink, originalFileLinkPath);
             }
+            else continue;
         }
         return true;
     } catch (error) {
@@ -710,19 +712,16 @@ async function disableModForGame(fullGamePath, mod, modName, appId, event) {
 
     /* Unlink hardlink */
     for (const file of filtered) {
+        const exists = fs.existsSync(path.join(file.fullPath, file.file.replace('_', '')));
         const fullFilePathToLink = path.join(file.fullPath, file.file.replace('_', ''));
-        if (fullFilePathToLink) {
+        if (exists) {
             c.warning(`Unlinking... ${fullFilePathToLink}`)
             await fs.promises.unlink(fullFilePathToLink);
         }
         else {
-            failed = true
-            break;
+            continue;
         }
     }
-
-    if (failed)
-        return false;
 
     /* Rename original file to origin */
     for (const file of filtered) {
@@ -733,6 +732,7 @@ async function disableModForGame(fullGamePath, mod, modName, appId, event) {
         }
         else {
             console.error('No original files found to revert prefixed state');
+            continue;
         }
     }
     return true;
