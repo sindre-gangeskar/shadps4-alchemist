@@ -23,10 +23,14 @@ It has the core functionality in place, enabling and disabling mods is functiona
 - Linux and MacOS Support
 - Drag'n drop functionality for installing mods
 - Creating mods that maintains the proper structure and relative path to the files in question
+- Improved conflict detection - Notify which mod is conflicting when attempting to enable a mod
 - And more
 
 ### Install
 Please see the [**releases**](https://github.com/sindre-gangeskar/shadps4-alchemist/releases) section for the latest builds available. 
+
+### Instructions
+Follow the instructions for installing a mod by visiting [**Instructions**](./documents/Instructions.md)
 
 ### How does it work in terms of installing mods? 
 - It renames the original file to keep things non-destructive with a prefix of an underscore "_". 
@@ -39,9 +43,7 @@ Please see the [**releases**](https://github.com/sindre-gangeskar/shadps4-alchem
 what the mod files themselves take. 
 
 ## Discord
-If you wish to test or just follow the progress of the project, consider joining the Discord server by 
-clicking [here](https://discord.gg/XydC82W6u2).
-
-You can choose to become a Tester by assigning yourself that role in **Channels & Roles** and provide valuable feedback, bug reports and receive troubleshooting support should any issues arise.
-
-
+Join the official Discord server by clicking [**here**](https://discord.gg/XydC82W6u2).
+- This server has roles available that you can assign yourself in **Channels & Roles** once you join the server.
+- Assign yourself the role of **Follower** if you'd like to observe the testing channels
+- Assign yourself the role of **Tester** if you'd like to test the app as it develops and provide valuable feedback and bug reports in the testing channels
