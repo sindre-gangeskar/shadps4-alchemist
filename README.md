@@ -18,7 +18,7 @@
 ### Under development
 A pre-release is out but it is bare-bones and meant for those who are willing to use as it is now and accepts that unexpected things can occur. 
 It has the core functionality in place, enabling and disabling mods is functional as well as launching games through shadPS4 Alchemist. 
-Please see the releases section. 
+Please see the [releases](https://github.com/sindre-gangeskar/shadps4-alchemist/releases) section. 
 
 ### How does it work in terms of installing mods? 
 - It renames the original file to keep things non-destructive with a prefix of an underscore "_". 
