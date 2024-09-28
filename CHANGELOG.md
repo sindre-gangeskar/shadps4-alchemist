@@ -1,3 +1,7 @@
+#### 0.1.1-alpha (2024-09-28)
+ 
+*  Fixed an issue where toggling the logger type failed to work
+
 #### 0.1.0-alpha (2024-09-27)
 
 ##### New Features
