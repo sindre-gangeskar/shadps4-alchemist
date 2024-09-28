@@ -29,7 +29,7 @@ function Install() {
 	const [ vBlankDivider, setvBlankDivider ] = useGlobalStateStore(state => [ state.vBlankDivider, state.setvBlankDivider ]);
 	const [ screenWidth, setScreenWidth ] = useGlobalStateStore(state => [ state.screenWidth, state.setScreenWidth ]);
 	const [ screenHeight, setScreenHeight ] = useGlobalStateStore(state => [ state.screenHeight, state.setScreenHeight ]);
-	const [ logType, setLogType ] = useGlobalStateStore(state => [ state.logType ]);
+	const [ logType, setLogType ] = useGlobalStateStore(state => [ state.logType, state.setLogType ]);
 
 	const [ modsForCurrentApp, setModsForCurrentApp ] = useState(null);
 	const [ enabledMods, setEnabledMods ] = useState([]);
@@ -94,7 +94,7 @@ function Install() {
 		value = !value;
 		setState(value);
 	}
-	const toggleLogType = (logType, setLogType) => {
+	const toggleLogType = () => {
 		if (logType === "async")
 			setLogType("sync")
 		else setLogType("async");
@@ -294,7 +294,7 @@ function Install() {
 						<p className="category">Logger</p>
 						<div className="setting-item">
 							<p>Enable Async</p>
-							<ToggleButton onClick={() => { toggleLogType(logType, setLogType) }} checked={logType === "async" ? true : false} />
+							<ToggleButton onClick={toggleLogType} checked={logType === "async" ? true : false} />
 						</div>
 					</div>
 					<div className="divider vertical"></div>

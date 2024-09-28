@@ -389,7 +389,7 @@ ipcMain.on('launch-game', async (event, data) => {
 
         console.log({ width: shadPS4ConfigData.GPU.screenWidth, height: shadPS4ConfigData.GPU.screenHeight });
         let tomlString = toml.stringify(shadPS4ConfigData);
-        fs.writeFileSync(shadPS4ConfigFilePath, tomlString);
+        await fs.promises.writeFile(shadPS4ConfigFilePath, tomlString);
 
         const shadPS4Process = spawn(shadPS4Exe, [ data.bin ], {
             cwd: shadPS4Dir,
