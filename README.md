@@ -17,7 +17,13 @@
 
 ### Under development
 A pre-release is out but it is bare-bones and meant for those who are willing to use as it is now and accepts that unexpected things can occur. 
-It has the core functionality in place, enabling and disabling mods is functional as well as launching games through shadPS4 Alchemist.  
+It has the core functionality in place, enabling and disabling mods is functional as well as launching games through shadPS4 Alchemist.
+
+### Planned features
+- Linux and MacOS Support
+- Drag'n drop functionality for installing mods
+- Creating mods that maintains the proper structure and relative path to the files in question
+- And more
 
 ### Install
 Please see the [**releases**](https://github.com/sindre-gangeskar/shadps4-alchemist/releases) section for the latest builds available. 
