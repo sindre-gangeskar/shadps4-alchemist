@@ -8,6 +8,7 @@ import Modal from '../partials/Modal';
 import ToggleButton from '../partials/ToggleButton';
 import Search from "../partials/Search";
 import { FaFaceFrown } from "react-icons/fa6";
+import { BiLoaderCircle } from "react-icons/bi";
 function Install() {
 	const [ setLibraryDirectory ] = useGlobalStateStore(state => [ state.setLibraryDirectory ]);
 	const [ setShadPS4Location ] = useGlobalStateStore(state => [ state.setShadPS4Location ]);
@@ -22,6 +23,8 @@ function Install() {
 	const [ selectedApp, setSelectedApp ] = useState(false);
 	const [ isGrid, setIsGrid ] = useState(null);
 	const [ viewTypeChanged, setViewTypeChanged ] = useState(false);
+	const [ togglingMod, setTogglingMod ] = useState(null);
+
 	/* Settings */
 	const [ fullscreen, setFullscreen ] = useGlobalStateStore(state => [ state.fullscreen, state.setFullscreen ]);
 	const [ isPS4Pro, setIsPS4Pro ] = useGlobalStateStore(state => [ state.isPS4Pro, state.setIsPS4Pro ]);
@@ -32,6 +35,7 @@ function Install() {
 	const [ logType, setLogType ] = useGlobalStateStore(state => [ state.logType, state.setLogType ]);
 
 	const [ modsForCurrentApp, setModsForCurrentApp ] = useState(null);
+	const [ modalTabView, setModalTabView ] = useState('game');
 	const [ enabledMods, setEnabledMods ] = useState([]);
 	const [ disabledMods, setDisabledMods ] = useState([]);
 	const [ installedMods, setInstalledMods ] = useState([]);
@@ -40,8 +44,6 @@ function Install() {
 	const widthSettingRef = useRef(null);
 	const vBlankDividerRef = useRef(null);
 	const searchInputRef = useRef(null);
-
-
 
 	const initializeLibrary = () => {
 		window.electron.send('open-file-dialog');
@@ -76,11 +78,19 @@ function Install() {
 	const closeModal = () => {
 		setModalOpen(false);
 	}
-	const enableMod = (data) => {
-		window.electron.send('enable-mod', ({ modName: data.modName, id: data.id }))
+
+	const setViewTab = (tab) => {
+		if (tab === 'game')
+			setModalTabView('game');
+		else setModalTabView('mods');
 	}
-	const disableMod = (data) => {
-		window.electron.send('disable-mod', ({ modName: data.modName, id: data.id }));
+
+
+	const enableMod = async (data) => {
+		await window.electron.send('enable-mod', ({ modName: data.modName, id: data.id }))
+	}
+	const disableMod = async (data) => {
+		await window.electron.send('disable-mod', ({ modName: data.modName, id: data.id }));
 	}
 	const toggleView = () => {
 		isGrid ? setIsGrid(false) : setIsGrid(true);
@@ -216,21 +226,150 @@ function Install() {
 		};
 	}, [ selectedApp, enabledMods, disabledMods, installedMods, modalOpen ]);
 
+	useEffect(() => {
+		const handleModStatusChange = (event, data) => {
+			if (data) {
+				setTogglingMod(data.mod);
+			}
+		}
+		const handleModStatusChangeCompletion = (event, data) => {
+			if (data && data.status) {
+				if (data.status === 'completed')
+					setTogglingMod(null);
+			}
+		}
+		window.electron.on('mod-process-complete', handleModStatusChangeCompletion);
+		window.electron.on('processing-mod', handleModStatusChange);
+		return (() => { window.electron.removeAllListeners('processing-mod', handleModStatusChange); window.electron.removeAllListeners('mod-process-complete', handleModStatusChangeCompletion) });
+	}, [])
+
 	/* Initialize Modal Structure */
 	useEffect(() => {
 		if (selectedApp) {
 			const modalHeader = (
 				<>
 					<div className="modal-header-wrapper">
+						<span className="tabs-wrapper">
+							<button className={`btn tab ${modalTabView == 'game' ? 'active' : 'inactive'}`} onClick={() => { setViewTab('game') }}>Game</button>
+							<button className={`btn tab ${modalTabView == 'mods' ? 'active' : 'inactive'}`} onClick={() => { setViewTab('mods') }}>Mods</button>
+						</span>
 						<div className="app-item">
-							<code>Game Directory:</code>
-							<button className="btn bold reveal-btn" onClick={() => { revealInExplorer(selectedApp, 'game') }}><IoIosFolderOpen /></button>
-							<code>Mods Directory:</code>
-							<button className="btn bold reveal-btn" onClick={() => { revealInExplorer(selectedApp, 'mod') }}><IoIosFolderOpen /></button>
+							<p>Game</p>
+							<button className="btn tab reveal-btn" onClick={() => { revealInExplorer(selectedApp, 'game') }}><IoIosFolderOpen /></button>
+							<p>Mods</p>
+							<button className="btn tab reveal-btn" onClick={() => { revealInExplorer(selectedApp, 'mod') }}><IoIosFolderOpen /></button>
 						</div>
-						<code className="modal-title">{selectedApp.title}</code>
 					</div>
 				</>
+			)
+			const modsView = (
+				<div className="modal-body-wrapper mods">
+					<div className="app-mods-wrapper">
+						{Array.isArray(modsForCurrentApp) && modsForCurrentApp.length > 0 ? (
+							<>
+								<p className="mods-title">Mods available</p>
+								<ul className="mods-list">
+									{modsForCurrentApp.map(mod => {
+										const isModEnabled = enabledMods && enabledMods.find(x => x.modName === mod) ? true : false;
+
+										return (
+											<div className="mod-item-group" key={mod}>
+												<li className="mod-item" key={mod}>{mod}</li>
+												<ToggleButton clickable={togglingMod === null ? true : false} checked={isModEnabled} onClick={() => {
+													if (!isModEnabled) {
+														enableMod({ modName: mod, id: selectedApp.id })
+													}
+													else {
+														disableMod({ modName: mod, id: selectedApp.id })
+													}
+												}} />
+												<BiLoaderCircle className={`loader ${togglingMod === mod ? 'show spinner' : 'hide'}`}  size={25}/>
+											</div>
+										);
+									})}
+								</ul>
+							</>
+						) : (
+							<div className="mods-text-wrapper">
+								<p className="mods-text">No mods are currently installed</p>
+								<FaFaceFrown size={20} />
+							</div>
+						)}
+					</div>
+				</div>
+			)
+			const gameView = (
+				<div className="modal-body-wrapper games">
+					<div className="app-settings-wrapper">
+						<p className="settings-title">Global Settings</p>
+						<p className="category">Emulator</p>
+						<div className="setting-item">
+							<p>PS4 Pro Mode</p>
+							<ToggleButton onClick={() => { toggleValue(isPS4Pro, setIsPS4Pro) }} checked={isPS4Pro} />
+						</div>
+						<div className="setting-item">
+							<p>Fullscreen</p>
+							<ToggleButton onClick={() => { toggleValue(fullscreen, setFullscreen) }} checked={fullscreen} />
+						</div>
+						<div className="setting-item">
+							<p>Show Splash</p>
+							<ToggleButton onClick={() => { toggleValue(showSplash, setShowSplash) }} checked={showSplash} />
+						</div>
+						<p className="category">Graphics</p>
+						<div className="setting-item">
+							<p>Screen Width:</p>
+							<input ref={widthSettingRef} type="text" className="input setting-input" placeholder={`Current: ${screenWidth}`} onChange={e => { setScreenWidth(e.target.value) }} />
+						</div>
+						<div className="setting-item">
+							<p>Screen Height:</p>
+							<input ref={heightSettingRef} type="text" className="input setting-input" placeholder={`Current: ${screenHeight}`} onChange={e => setScreenHeight(e.target.value)} />
+						</div>
+						<div className="setting-item">
+							<p>Vblank Divider</p>
+							<input ref={vBlankDividerRef} type="number" placeholder={`Current: ${vBlankDivider}`} className="input setting-input" min={0} max={10} onChange={(e) => { setvBlankDivider(e.target.value) }} />
+						</div>
+						<p className="category">Logger</p>
+						<div className="setting-item">
+							<p>Enable Async</p>
+							<ToggleButton onClick={toggleLogType} checked={logType === "async" ? true : false} />
+						</div>
+					</div>
+					<div className="app-details-wrapper">
+						<div className="app-poster-wrapper">
+							<img src={selectedApp.icon} alt="game-icon" className="app-poster" />
+						</div>
+
+						<div className="game-details-wrapper">
+							<button className="btn bold play-btn" onClick={() => { bootGame() }}>Launch {selectedApp.title}</button>
+
+							<div className="game-detail">
+								<p className="game-title">{selectedApp.title}</p>
+							</div>
+							<div className="game-detail">
+								<p>ID:</p>
+								<p>{selectedApp.id}</p>
+							</div>
+							{Array.isArray(modsForCurrentApp) ?
+								(<div className="game-detail">
+									<p>Total mods:</p>
+									<p>{modsForCurrentApp.length}</p>
+								</div>) :
+								(<div className="game-detail">
+									<p>No mods installed</p>
+								</div>)}
+							{enabledMods && Array.isArray(modsForCurrentApp) ? (
+								<div className="game-detail">
+									<p>Enabled Mods:</p>
+									<p>{enabledMods.length}</p>
+								</div>) : null}
+							{disabledMods && Array.isArray(modsForCurrentApp) ? (
+								<div className="game-detail">
+									<p>Disabled Mods:</p>
+									<p>{disabledMods.length}</p>
+								</div>) : null}
+						</div>
+					</div>
+				</div>
 			)
 			const modalBody = (
 				<div className="modal-body-wrapper">
@@ -345,12 +484,12 @@ function Install() {
 			)
 			setModalContent({
 				header: modalHeader,
-				body: modalBody,
+				body: modalTabView === 'game' ? gameView : modsView,
 				footer: modalFooter,
 				backdrop: modalBackdrop
 			})
 		}
-	}, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods, fullscreen, showSplash, logType, isPS4Pro, vBlankDivider ])
+	}, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods, fullscreen, showSplash, logType, isPS4Pro, vBlankDivider, modalTabView, togglingMod ])
 
 	useEffect(() => {
 		if (searchTerm)

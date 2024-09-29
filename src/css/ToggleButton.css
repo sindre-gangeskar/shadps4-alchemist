@@ -1,15 +1,19 @@
 .toggle-btn {
     width: 60px;
+    min-width: 60px;
     height: 30px;
-    border-radius: 2.5rem;
+    border-radius: 1.25rem;
     background-color: gray;
     position: relative;
     cursor: pointer;
     transition: 250ms ease;
+    align-items: center;
+    align-content: center;
+    outline: 2px solid rgba(255, 255, 255, 0);
 }
-.toggle-btn:hover{
-    box-shadow: 0 0 15px 5px var(--secondary-color);
-    outline: 1px solid white;
+
+.toggle-btn:hover {
+    outline: 2px solid rgba(255, 255, 255, 255);
 }
 
 .thumb {
@@ -18,18 +22,20 @@
     width: 20px;
     height: 20px;
     background-color: white;
-    border-radius: 50%;
-    padding: 0px;
+    border-radius: 0.5rem;
     transition: transform 250ms ease;
-    margin: 0;
     transform: translateX(5px);
 }
 
 .toggle-btn.toggled {
-    background-color: var(--secondary-color);
+    background: linear-gradient(to right, #294592 0%, var(--tertiary-primary))
 }
 
 .toggle-btn.toggled .thumb {
     transform: translateX(calc(60px - 25px));
 }
 
+.disabled {
+    filter: brightness(50%);
+    pointer-events: none;
+}

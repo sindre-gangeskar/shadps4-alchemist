@@ -1,3 +1,9 @@
+#### 0.1.3-alpha (2024-09-29)
+
+##### Bug Fixes
+
+*  cleaned up game modal by splitting the mods view into a seperate tab and added visual feedback during the process of toggling mods (25fa735c)
+
 #### 0.1.2-alpha (2024-09-29)
 
 ##### Bug Fixes

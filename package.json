@@ -5,7 +5,7 @@
     "nickname": "Boba Le Thief"
   },
   "description": "A mod manager and games launcher for shadPS4 emulator",
-  "version": "0.1.2-alpha",
+  "version": "0.1.3-alpha",
   "main": "electron/electron.js",
   "type": "module",
   "homepage": "./",

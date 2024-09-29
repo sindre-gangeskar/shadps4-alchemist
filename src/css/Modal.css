@@ -23,24 +23,74 @@
     min-width: 400px;
     min-height: 300px;
     z-index: 10;
-    transition: opacity 500ms cubic-bezier(0.19, 1, 0.22, 1);
-    border-radius: 0.5rem;
+    transition:  opacity 250ms cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 .modal-header-wrapper {
     width: 100%;
-    background-color: black;
+    background-color: var(--transparent-dark);
+    backdrop-filter: var(--frosted-blur);
     padding: 15px;
-    border-radius: 0.5rem 0.5rem 0 0;
     display: flex;
+    align-items: center;
+    align-content: center;
     flex-direction: row;
     justify-content: space-between;
 }
 
-.modal-title {
+.tabs-wrapper {
     position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px;
+    gap: 5px;
+}
+
+.btn.tab {
+    color: white;
+    font-size: 1rem;
+    background-color: var(--transparent-dark);
+    border-radius: 0;
+    width: 80px;
     height: 100%;
-    text-align: center;
+    outline: 1px solid #ffffff28
+}
+
+.btn.tab.active {
+    outline: 1px solid var(--tertiary-primary);
+}
+
+.btn.tab.active::after {
+    display: block;
+    content: '';
+    width: 100%;
+    border-width: 2px;
+    border-color: white;
+}
+
+.btn.tab::after {
+    position: relative;
+    content: '';
+    display: block;
+    width: 0%;
+    border-bottom: 1px solid var(--tertiary-primary);
+    transition: 250ms ease;
+    border-width: 2px;
+}
+
+.btn.tab:hover::after {
+    width: 100%;
+}
+
+.modal-title {
+    left: 50%;
+    transform: translateX(-50%);
+    position: absolute;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    align-content: center;
 }
 
 .modal-body-wrapper {
@@ -50,11 +100,14 @@
     width: 100%;
     height: 100%;
     text-align: center;
-    background-color: var(--primary-color);
+    /* background-color: var(--primary-color); */
+    background-color: var(--transparent-dark);
+    backdrop-filter: var(--frosted-blur);
     color: rgb(255, 255, 255);
     font-weight: bolder;
     align-items: center;
     justify-content: space-around;
+    transition: backdrop-filter 250ms ease;
 }
 
 .modal-footer-wrapper {
@@ -66,8 +119,8 @@
     width: 100%;
     align-content: center;
     padding: 20px;
-    background-color: rgba(0, 0, 0, 0.75);
-    border-radius: 0 0 0.5rem 0.5rem;
+    background-color: var(--transparent-dark);
+    backdrop-filter: var(--frosted-blur);
 }
 
 .modal-close {
@@ -84,21 +137,21 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    font-size: 0.5rem;
+    color: white;
+    font-size: 1rem;
+    border-radius: 0;
+    padding: 10px;
+    gap: 15px;
 }
 
 .reveal-btn {
     align-items: center;
-    background-color: black;
-    width: fit-content;
-    padding: 0;
-    margin: 0;
-    width: 30px;
-    height: 30px;
+    height: 40px;
 }
 
 .reveal-btn:hover {
-    background-color: white;
-    color: black;
+    color: var(--tertiary-primary);
 }
 
 .play-btn {
@@ -124,6 +177,7 @@
     width: 100%;
     list-style: none;
     margin: 0px auto;
+    padding: 25px;
     display: flex;
     flex-direction: column;
     justify-content: top;
@@ -156,7 +210,7 @@
 }
 
 .mod-item-group {
-    width: 90%;
+    width: 100%;
     align-items: center;
     display: flex;
     justify-content: space-between;
@@ -171,7 +225,7 @@
 
 .app-details-wrapper {
     position: relative;
-    width: 400px;
+    flex: 1;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -227,7 +281,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    width: 400px;
+    width: 60%;
 }
 
 .mods-text-wrapper {
@@ -253,7 +307,7 @@
 .app-settings-wrapper {
     display: flex;
     flex-direction: column;
-    width: 400px;
+    flex: 1;
     justify-content: top;
     height: 100%;
     margin: 10px;
@@ -268,7 +322,7 @@
     flex-direction: row;
     font-weight: lighter;
     justify-content: space-between;
-    width: 100%;
+    width: 80%;
     align-items: center;
 }
 
@@ -325,13 +379,22 @@
     font-weight: lighter;
 }
 
-@keyframes scaleOut {
+.spinner {
+    animation: spin 1.5s infinite linear;
+}
+
+.loader{
+    right: 0;
+    margin: -10px;
+    position: absolute;
+}
+
+@keyframes spin {
     from {
-        position: fixed;
-        transform: scaleY(0);
+        transform: rotateZ(0deg);
     }
 
     to {
-        transform: scaleY(1);
+        transform: rotateZ(360deg);
     }
 }

@@ -1,6 +1,12 @@
 @import '../css/colors.css';
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
 
+:root {
+  --transparent-dark: hsla(0, 0%, 0%, 0.7);
+  --frosted-blur: blur(15px);
+}
+
+
 @font-face{
   font-family: 'JetBrains Mono';
   src: url('../assets/fonts/JetBrainsMono[wght].ttf');
@@ -70,4 +76,12 @@ button {
 .hide {
   opacity: 0;
   pointer-events: none;
+}
+
+.hide.blurred{
+  backdrop-filter: blur(0px);
+}
+
+.show.blurred{
+  backdrop-filter: var(--frosted-blur);
 }
