@@ -1,3 +1,9 @@
+#### 0.1.2-alpha (2024-09-29)
+
+##### Bug Fixes
+
+*  improve mod enabling/disabling functionality, add more accurate file existence checks before linking/unlinking (5d1ba9b8)
+
 #### 0.1.1-alpha (2024-09-28)
  
 *  Fixed an issue where toggling the logger type failed to work
