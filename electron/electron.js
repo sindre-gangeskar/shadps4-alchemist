@@ -257,6 +257,7 @@ ipcMain.on(`get-mods-directory`, async (event, id) => {
 })
 ipcMain.on('enable-mod', async (event, data) => {
     try {
+        event.sender.send('processing-mod', { status: 'processing', mod: data.modName });
         const initialData = parseInitialModData(event, data);
         /* Initialize mod object */
         const mod = { modName: data.modName, enabled: true };
@@ -278,8 +279,12 @@ ipcMain.on('enable-mod', async (event, data) => {
             await saveConfig(fileData, initialData.modConfigPath);
             sendMessage(event, data.modName, 'Successfully Enabled Mod', 200, 'success');
             event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
+            event.sender.send('mod-process-complete', { status: 'completed' });
         }
-        else sendMessage(event, `Trying to activate: ${data.modName}`, `Conflict detected: file is already in use by another mod. Disable conflicting mod and retry`, 200, 'error');
+        else {
+            event.sender.send('mod-process-complete', { status: 'completed' });
+            sendMessage(event, `Trying to activate: ${data.modName}`, `Conflict detected: file is already in use by another mod. Disable conflicting mod and retry`, 200, 'error');
+        }
     } catch (error) {
         console.error(error);
         sendMessage(event, 'An error has occurred while enabling enabling mod', 'Failed To Enable Mod', 500, 'error');
@@ -288,6 +293,7 @@ ipcMain.on('enable-mod', async (event, data) => {
 })
 ipcMain.on('disable-mod', async (event, data) => {
     try {
+        event.sender.send('processing-mod', { status: 'processing', mod: data.modName });
         const initialData = parseInitialModData(event, data);
         const fileData = JSON.parse(fs.readFileSync(initialData.modConfigPath, 'utf-8'));
 
@@ -308,9 +314,12 @@ ipcMain.on('disable-mod', async (event, data) => {
             await saveConfig(fileData, initialData.modConfigPath);
             sendMessage(event, data.modName, 'Successfully Disabled Mod', 200, 'success');
             event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
-
+            event.sender.send('mod-process-complete', { status: 'completed' });
         }
-        else sendMessage(event, 'An error occurred while attempting to disable mod', 'UnknownDisableErr', 500, 'error');
+        else {
+            event.sender.send('mod-process-complete', { status: 'completed' });
+            sendMessage(event, 'An error occurred while attempting to disable mod', 'UnknownDisableErr', 500, 'error');
+        }
     } catch (error) {
         console.error(error);
     }
