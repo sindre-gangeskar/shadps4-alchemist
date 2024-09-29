@@ -668,7 +668,10 @@ async function enableModForGame(fullGamePath, mod, modName, appId, event) {
             let originalFileLinkPath;
             if (originalFileObject)
                 originalFileLinkPath = path.join(originalFileObject.fullPath, originalFileObject.file);
-            else continue;
+            else {
+                c.error('File not found, skipping...', file);
+                continue;
+            }
 
             const isRenamed = await fs.promises.access(`${originalFileObject.fullPath}\\_${originalFileObject.file}`).then(() => true).catch(() => false);
             const exists = await fs.promises.access(`${originalFileObject.fullPath}\\${originalFileObject.file}`).then(() => true).catch(() => false);
@@ -678,8 +681,12 @@ async function enableModForGame(fullGamePath, mod, modName, appId, event) {
                 c.warning(`Linking... ${fileToLink} -> ${originalFileLinkPath}`);
                 await fs.promises.link(fileToLink, originalFileLinkPath);
             }
-            else continue;
+            else {
+                c.error('File not found for linking.. skipping...', file);
+                continue;
+            }
         }
+        c.success('Linking process finished!');
         return true;
     } catch (error) {
         console.error(error);
@@ -712,13 +719,14 @@ async function disableModForGame(fullGamePath, mod, modName, appId, event) {
 
     /* Unlink hardlink */
     for (const file of filtered) {
-        const exists = fs.existsSync(path.join(file.fullPath, file.file.replace('_', '')));
         const fullFilePathToLink = path.join(file.fullPath, file.file.replace('_', ''));
+        const exists = fs.existsSync(fullFilePathToLink);
         if (exists) {
             c.warning(`Unlinking... ${fullFilePathToLink}`)
             await fs.promises.unlink(fullFilePathToLink);
         }
         else {
+            c.error('No file found to unlink...', file);
             continue;
         }
     }
@@ -735,5 +743,6 @@ async function disableModForGame(fullGamePath, mod, modName, appId, event) {
             continue;
         }
     }
+    c.success('Unlinking process finished!');
     return true;
 }
