@@ -2,7 +2,7 @@
 
 ##### Code Style Changes
 
-*  cleaned up game modal by splitting the mods view into a seperate tab and added visual feedback during the process of toggling mods (704abbfe)
+*  cleaned up game modal by splitting the mods view into a separate tab and added visual feedback during the process of toggling mods (704abbfe)
 
 #### 0.1.2-alpha (2024-09-29)
 
