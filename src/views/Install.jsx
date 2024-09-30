@@ -69,6 +69,9 @@ function Install() {
 		console.log(app, type);
 		window.electron.send('open-in-explorer', { data: app, type: type });
 	}
+	const revealLogsInExplorer = (app) => {
+		window.electron.send('open-logs', { id: app.id });
+	}
 	const handleSelectedApp = (app) => {
 		setSelectedApp(app);
 		setTimeout(() => {
@@ -84,8 +87,6 @@ function Install() {
 			setModalTabView('game');
 		else setModalTabView('mods');
 	}
-
-
 	const enableMod = async (data) => {
 		await window.electron.send('enable-mod', ({ modName: data.modName, id: data.id }))
 	}
@@ -254,6 +255,8 @@ function Install() {
 							<button className={`btn tab ${modalTabView == 'mods' ? 'active' : 'inactive'}`} onClick={() => { setViewTab('mods') }}>Mods</button>
 						</span>
 						<div className="app-item">
+							<p>Logs</p>
+							<button className="btn tab reveal-btn" onClick={() => { revealLogsInExplorer(selectedApp) }}><IoIosFolderOpen /></button>
 							<p>Game</p>
 							<button className="btn tab reveal-btn" onClick={() => { revealInExplorer(selectedApp, 'game') }}><IoIosFolderOpen /></button>
 							<p>Mods</p>
@@ -283,7 +286,7 @@ function Install() {
 														disableMod({ modName: mod, id: selectedApp.id })
 													}
 												}} />
-												<BiLoaderCircle className={`loader ${togglingMod === mod ? 'show spinner' : 'hide'}`}  size={25}/>
+												<BiLoaderCircle className={`loader ${togglingMod === mod ? 'show spinner' : 'hide'}`} size={25} />
 											</div>
 										);
 									})}

@@ -14,7 +14,7 @@ buildAssets
 /build
 
 data/
-
+logs/
 user/
 # misc
 .DS_Store

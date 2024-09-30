@@ -1,3 +1,13 @@
+#### 0.1.4-alpha (2024-09-30)
+
+##### New Features
+
+*  Add logging for toggling of mods when a mismatch occurs between the mod file and original file in question (6c395f09)
+
+##### Code Style Changes
+
+*  cleaned up game modal by splitting the mods view into a seperate tab and added visual feedback during the process of toggling mods (704abbfe)
+
 #### 0.1.3-alpha (2024-09-29)
 
 ##### Code Style Changes

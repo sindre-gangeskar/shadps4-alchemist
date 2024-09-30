@@ -134,6 +134,20 @@ ipcMain.on('open-in-explorer', async (event, data) => {
         console.error(error);
     }
 })
+
+ipcMain.on('open-logs', async (event, data) => {
+    try {
+        if (data) {
+            if (!fs.existsSync(path.join(dataFilePath, 'logs', data.id)))
+                await fs.promises.mkdir(path.join(dataFilePath, 'logs', data.id), {recursive: true});
+
+            shell.openPath(path.join(dataFilePath, 'logs', data.id));
+        }
+    } catch (error) {
+        console.error(error);
+    }
+})
+
 ipcMain.on('set-shadps4', async (event) => {
     let config;
     if (checkFileExists(dataFilePath, 'config.json')) {
@@ -265,9 +279,9 @@ ipcMain.on('enable-mod', async (event, data) => {
 
         /* Get files from mod, and enable them */
         const filesInMod = getFilesInMod(absoluteModsPath, mod.modName);
-        const success = await enableModForGame(initialData.gameDir, filesInMod, mod.modName, data.id, event)
+        const modStatus = await enableModForGame(initialData.gameDir, filesInMod, mod.modName, data.id, event)
 
-        if (success) {
+        if (modStatus.success) {
             /* Parse mods config file for said game */
             const fileData = JSON.parse(fs.readFileSync(initialData.modConfigPath, 'utf-8'));
 
@@ -277,7 +291,8 @@ ipcMain.on('enable-mod', async (event, data) => {
 
             const mods = getAllMods(fileData);
             await saveConfig(fileData, initialData.modConfigPath);
-            sendMessage(event, data.modName, 'Successfully Enabled Mod', 200, 'success');
+            if (modStatus.error) sendMessage(event, data.modName, 'Successfully Enabled Mod with warnings, see logs for details', 200, 'success');
+            else sendMessage(event, data.modName, 'Successfully Enabled Mod', 200, 'success');
             event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
             event.sender.send('mod-process-complete', { status: 'completed' });
         }
@@ -648,6 +663,7 @@ async function enableModForGame(fullGamePath, mod, modName, appId, event) {
     let conflict = false;
     const modFilesToLink = mod;
     const originalFiles = [];
+    const errors = [];
     const originalFilesToRename = getGameRootDir(fullGamePath, appId, originalFiles, mod)
     try {
         /* Check for conflicts */
@@ -665,26 +681,36 @@ async function enableModForGame(fullGamePath, mod, modName, appId, event) {
 
         /* Rename original file */
         for (const file of originalFilesToRename) {
-            const originalFile = `${file.fullPath}\\${file.file}`
-            const renamedFile = `${file.fullPath}\\_${file.file}`
+            const originalFile = path.normalize(`${file.fullPath}\\${file.file}`)
+            const renamedFile = path.normalize(`${file.fullPath}\\_${file.file}`)
             await fs.promises.rename(originalFile, renamedFile);
             c.success(`Renaming... ${originalFile} -> ${renamedFile}`);
         }
 
         /* Link mod files to game directory */
         for (const file of modFilesToLink) {
-            const originalFileObject = originalFiles.find(x => x && x.fullPath && x.file === file.file)
+            const originalFileObject = originalFiles.find(x => x.path.toLowerCase() === file.path.toLowerCase() && x.file.toLowerCase() === file.file.toLowerCase())
             let originalFileLinkPath;
             if (originalFileObject)
-                originalFileLinkPath = path.join(originalFileObject.fullPath, originalFileObject.file);
+                originalFileLinkPath = path.normalize(path.resolve(`${originalFileObject.fullPath}\\${originalFileObject.file}`));
             else {
+                errors.push({
+                    message: 'Could not find the original file compared to the mod file. The mod files may be structured incorrectly – potential relative path or file name mismatch. Check for spelling errors in the path, file name, and extension in the mod files, and compare them with the game files to be modified.',
+                    fileInModToCheckForMismatch: `${file.path}\\${file.file}`,
+                    cause: "This could happen if the mod file in question is not structured exactly the same as the game file and its relative path, please see example below.",
+                    example: [
+                        'Mod file relative path: gameRoot\\textures\\enviroment\\forest\\trees_texture.png',
+                        'Game file relative path: gameRoot\\textures\\environment\\forest\\trees_texture.png',
+                        'Mismatch: The mod is using "enviroment" (incorrect spelling), but the game is expecting "environment". This minor typo in the directory name prevents the program from finding the file and skips it instead.'
+                    ]
+                })
                 c.error('File not found, skipping...', file);
                 continue;
             }
 
-            const isRenamed = await fs.promises.access(`${originalFileObject.fullPath}\\_${originalFileObject.file}`).then(() => true).catch(() => false);
-            const exists = await fs.promises.access(`${originalFileObject.fullPath}\\${originalFileObject.file}`).then(() => true).catch(() => false);
-            const fileToLink = `${file.fullPath}\\${file.file}`
+            const isRenamed = await fs.promises.access(path.normalize(`${originalFileObject.fullPath}\\_${originalFileObject.file}`)).then(() => true).catch(() => false);
+            const exists = await fs.promises.access(path.normalize(`${originalFileObject.fullPath}\\${originalFileObject.file}`)).then(() => true).catch(() => false);
+            const fileToLink = path.normalize(`${file.fullPath}\\${file.file}`)
 
             if (isRenamed && !exists) {
                 c.warning(`Linking... ${fileToLink} -> ${originalFileLinkPath}`);
@@ -696,7 +722,11 @@ async function enableModForGame(fullGamePath, mod, modName, appId, event) {
             }
         }
         c.success('Linking process finished!');
-        return true;
+        if (!fs.existsSync(path.join(dataFilePath, 'logs', `${appId}`)))
+            await fs.promises.mkdir(path.join(dataFilePath, 'logs', `${appId}`), {recursive: true});
+        if (errors.length > 0)
+            await fs.promises.writeFile(path.join(dataFilePath, 'logs', `${appId}`, `${modName}.json`), JSON.stringify(errors, null, 2));
+        return { success: true, error: errors.length > 0 ? true : false };
     } catch (error) {
         console.error(error);
         return false;
