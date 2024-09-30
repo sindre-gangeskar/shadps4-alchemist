@@ -118,7 +118,7 @@ function App() {
       return new Promise((resolve) => {
         timeoutID = setTimeout(() => {
           resolve()
-        }, 2000);
+        }, 4000);
       })
     }
     if (type === 'success') {
