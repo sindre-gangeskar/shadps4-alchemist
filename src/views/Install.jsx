@@ -188,8 +188,9 @@ function Install() {
 
 	useEffect(() => {
 		if (selectedApp) {
-			const getModStates = async () => {
-				const data = await window.electron.getModStates(selectedApp);
+			window.electron.send('get-mods-in-directory', selectedApp)
+			const getModStates = (event, data) => {
+				console.log(data);
 				if (data && data.mods) {
 					const enabledMods = [];
 					const disabledMods = [];
@@ -201,9 +202,11 @@ function Install() {
 
 					setEnabledMods(enabledMods);
 					setDisabledMods(disabledMods);
+					setInstalledMods(data.mods.length);
 				}
 			}
-			getModStates();
+			window.electron.on('get-mods-in-directory', getModStates)
+			return () => { window.electron.removeAllListeners('get-mods-in-directory', getModStates) }
 		}
 	}, [ selectedApp ]);
 

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, shell } from 'electron';
 import isDev from 'electron-is-dev';
 import path from 'path';
-import fs from 'fs';
+import fs, { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { spawn } from 'child_process';
 import toml from '@iarna/toml';
@@ -139,7 +139,7 @@ ipcMain.on('open-logs', async (event, data) => {
     try {
         if (data) {
             if (!fs.existsSync(path.join(dataFilePath, 'logs', data.id)))
-                await fs.promises.mkdir(path.join(dataFilePath, 'logs', data.id), {recursive: true});
+                await fs.promises.mkdir(path.join(dataFilePath, 'logs', data.id), { recursive: true });
 
             shell.openPath(path.join(dataFilePath, 'logs', data.id));
         }
@@ -147,7 +147,6 @@ ipcMain.on('open-logs', async (event, data) => {
         console.error(error);
     }
 })
-
 ipcMain.on('set-shadps4', async (event) => {
     let config;
     if (checkFileExists(dataFilePath, 'config.json')) {
@@ -247,7 +246,6 @@ ipcMain.on('update-view', async (event, data) => {
         }
     }
 })
-
 ipcMain.on('get-view', async (event) => {
     const config = await parseJSON(dataFilePath, 'config.json');
     const isGrid = config.isGrid;
@@ -267,6 +265,36 @@ ipcMain.on(`get-mods-directory`, async (event, id) => {
     }
     else {
         event.sender.send(`mods-${id}`, { mods: `No directory in mods library exist for: ${id}` });
+    }
+})
+ipcMain.on('get-mods-in-directory', async (event, data) => {
+    const config = await getConfigData();
+    try {
+        if (data) {
+            const modDir = path.join(config.mods_path, data.id);
+            if (!existsSync(modDir)) {
+                fs.mkdirSync(modDir, { recursive: true });
+            }
+            const modConfigData = await getModConfigData(data.id);
+            const modsInDirectory = fs.readdirSync(modDir, { withFileTypes: true })
+                .filter(x => x.isDirectory()
+                    && fs.readdirSync(path.join(modDir, x.name)).length > 0).map(x => ({
+                        name: x.name
+                    }));
+
+            const modsInDirectoryNames = modsInDirectory.map(x => x.name);
+            modConfigData.mods = Object.keys(modConfigData.mods)
+                .filter(x => modsInDirectoryNames.includes(x))
+                .reduce((acc, modName) => {
+                    acc[ modName ] = modConfigData.mods[ modName ];
+                    return acc;
+                }, {});
+            console.log(modConfigData.mods);
+            await saveConfig(modConfigData, path.join(dataFilePath, 'mods', `${data.id}.json`));
+            event.sender.send('get-mods-in-directory', modsInDirectory);
+        }
+    } catch (error) {
+        c.error(error);
     }
 })
 ipcMain.on('enable-mod', async (event, data) => {
@@ -723,7 +751,7 @@ async function enableModForGame(fullGamePath, mod, modName, appId, event) {
         }
         c.success('Linking process finished!');
         if (!fs.existsSync(path.join(dataFilePath, 'logs', `${appId}`)))
-            await fs.promises.mkdir(path.join(dataFilePath, 'logs', `${appId}`), {recursive: true});
+            await fs.promises.mkdir(path.join(dataFilePath, 'logs', `${appId}`), { recursive: true });
         if (errors.length > 0)
             await fs.promises.writeFile(path.join(dataFilePath, 'logs', `${appId}`, `${modName}.json`), JSON.stringify(errors, null, 2));
         return { success: true, error: errors.length > 0 ? true : false };
@@ -784,4 +812,17 @@ async function disableModForGame(fullGamePath, mod, modName, appId, event) {
     }
     c.success('Unlinking process finished!');
     return true;
+}
+async function getConfigData() {
+    const exists = await fs.existsSync(path.join(dataFilePath, 'config.json'));
+    if (exists) {
+        return JSON.parse(await fs.promises.readFile(path.join(dataFilePath, 'config.json')));
+    }
+}
+async function getModConfigData(id) {
+    const exists = fs.existsSync(path.join(dataFilePath, 'mods', `${id}.json`));
+    if (exists) {
+        const modConfigData = JSON.parse(await fs.promises.readFile(path.join(dataFilePath, 'mods', `${id}.json`)));
+        return modConfigData;
+    }
 }
