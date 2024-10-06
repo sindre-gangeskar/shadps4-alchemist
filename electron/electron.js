@@ -8,6 +8,7 @@ import toml from '@iarna/toml';
 import updatesChecker from './updatesChecker.js';
 import pkg from "electron-updater";
 import { Candy } from 'candy-log';
+import { FaFaceSadCry } from 'react-icons/fa6';
 
 const c = new Candy();
 const { autoUpdater } = pkg;
@@ -91,7 +92,7 @@ ipcMain.on('open-file-dialog', async (event) => {
         const paths = [ config.games_path, config.mods_path ];
         if (checkSameDrive(event, paths)) {
             await fs.promises.writeFile(path.join(dataFilePath, 'config.json'), JSON.stringify('', null, 2))
-            await saveConfig(config, path.resolve(`${dataFilePath}/config.json`));
+            await saveJSON(config, path.resolve(`${dataFilePath}/config.json`));
             event.sender.send('fetch-games-in-library', { games: games, shadPS4Exe: config.selectedFile });
         }
 
@@ -159,7 +160,7 @@ ipcMain.on('set-shadps4', async (event) => {
         })
         if (!result.canceled) {
             config.shadPS4Exe = result.filePaths[ 0 ];
-            saveConfig(config, path.join(dataFilePath, 'config.json'));
+            saveJSON(config, path.join(dataFilePath, 'config.json'));
             event.sender.send('get-paths', { modsPath: config.mods_path, shadPS4Path: config.shadPS4Exe, gamesPath: config.games_path });
             sendMessage(event, 'Successfully saved location for shadps4.exe', 'Saved', 200, 'success');
         }
@@ -178,7 +179,7 @@ ipcMain.on('set-games', async (event) => {
             config.games = getGamesInDirectory(config.games_path);
             if (checkSameDrive(event, [ config.games_path, config.mods_path ])) {
                 sendMessage(event, 'Successfully saved new location for games', 'Saved', 200, 'success');
-                saveConfig(config, path.join(dataFilePath, 'config.json'));
+                saveJSON(config, path.join(dataFilePath, 'config.json'));
                 event.sender.send('get-paths', { modsPath: config.mods_path, shadPS4Path: config.shadPS4Exe, gamesPath: config.games_path });
             }
             else sendMessage(event, 'Cannot save games directory to a different drive from mods directory', 'SaveErr', 400, 'error');
@@ -197,7 +198,7 @@ ipcMain.on('set-mods', async (event) => {
         if (!result.canceled) {
             config.mods_path = result.filePaths[ 0 ];
             if (checkSameDrive(event, [ config.games_path, config.mods_path ])) {
-                await saveConfig(config, path.join(dataFilePath, 'config.json'));
+                await saveJSON(config, path.join(dataFilePath, 'config.json'));
                 sendMessage(event, 'Successfully saved new location for mods directory', 'Saved', 200, 'success')
                 event.sender.send('get-paths', { modsPath: config.mods_path, shadPS4Path: config.shadPS4Exe, gamesPath: config.games_path });
             }
@@ -242,7 +243,7 @@ ipcMain.on('update-view', async (event, data) => {
         const updated = config;
         if (data) {
             updated.isGrid = data.isGrid;
-            await saveConfig(updated, `${dataFilePath}\\config.json`);
+            await saveJSON(updated, `${dataFilePath}\\config.json`);
         }
     }
 })
@@ -267,7 +268,7 @@ ipcMain.on(`get-mods-directory`, async (event, id) => {
         event.sender.send(`mods-${id}`, { mods: `No directory in mods library exist for: ${id}` });
     }
 })
-ipcMain.on('get-mods-in-directory', async (event, data) => {
+ipcMain.on('refresh-mods-in-directory', async (event, data) => {
     const config = await getConfigData();
     try {
         if (data) {
@@ -276,22 +277,21 @@ ipcMain.on('get-mods-in-directory', async (event, data) => {
                 fs.mkdirSync(modDir, { recursive: true });
             }
             const modConfigData = await getModConfigData(data.id);
-            const modsInDirectory = fs.readdirSync(modDir, { withFileTypes: true })
-                .filter(x => x.isDirectory()
-                    && fs.readdirSync(path.join(modDir, x.name)).length > 0).map(x => ({
-                        name: x.name
-                    }));
+            const updatedModConfigData = await getModsInDirectory(config, data, modConfigData);
 
-            const modsInDirectoryNames = modsInDirectory.map(x => x.name);
-            modConfigData.mods = Object.keys(modConfigData.mods)
-                .filter(x => modsInDirectoryNames.includes(x))
-                .reduce((acc, modName) => {
-                    acc[ modName ] = modConfigData.mods[ modName ];
-                    return acc;
-                }, {});
-            console.log(modConfigData.mods);
-            await saveConfig(modConfigData, path.join(dataFilePath, 'mods', `${data.id}.json`));
-            event.sender.send('get-mods-in-directory', modsInDirectory);
+            await saveJSON(updatedModConfigData, path.join(dataFilePath, 'mods', `${data.id}.json`));
+
+            const enabledMods = Object.values(modConfigData.mods).filter(mod => mod.enabled).map(mod => mod);
+            const disabledMods = Object.values(modConfigData.mods).filter(mod => !mod.enabled).map(mod => mod);
+
+            event.sender.send('mod-state', ({ mods: modConfigData.mods, enabled: enabledMods, disabled: disabledMods }));
+
+            fs.watch(modDir, async (eventType, filename) => {
+                if (filename) {
+                    await saveJSON(updatedModConfigData, path.join(dataFilePath, 'mods', `${data.id}.json`));
+                    event.sender.send('mod-state', ({ mods: modConfigData.mods, enabled: enabledMods, disabled: disabledMods }));
+                }
+            })
         }
     } catch (error) {
         c.error(error);
@@ -318,7 +318,7 @@ ipcMain.on('enable-mod', async (event, data) => {
             else fileData.mods[ data.modName ].enabled = true;
 
             const mods = getAllMods(fileData);
-            await saveConfig(fileData, initialData.modConfigPath);
+            await saveJSON(fileData, initialData.modConfigPath);
             if (modStatus.error) sendMessage(event, data.modName, 'Successfully Enabled Mod with warnings, see logs for details', 200, 'success');
             else sendMessage(event, data.modName, 'Successfully Enabled Mod', 200, 'success');
             event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
@@ -354,7 +354,7 @@ ipcMain.on('disable-mod', async (event, data) => {
             else fileData.mods[ data.modName ].enabled = false;
 
             const mods = getAllMods(fileData)
-            await saveConfig(fileData, initialData.modConfigPath);
+            await saveJSON(fileData, initialData.modConfigPath);
             sendMessage(event, data.modName, 'Successfully Disabled Mod', 200, 'success');
             event.sender.send('mod-state', { mods: fileData.mods[ data.modName ], enabled: mods.enabled, disabled: mods.disabled })
             event.sender.send('mod-process-complete', { status: 'completed' });
@@ -650,8 +650,29 @@ function getGamesInDirectory(gamesDirectory) {
     })
     if (games) return games;
 }
+async function getModsInDirectory(config, data, modConfigData) {
+    const modDir = path.join(config.mods_path, data.id);
+    if (!existsSync(modDir)) {
+        fs.mkdirSync(modDir, { recursive: true });
+    }
 
-async function saveConfig(data, filePath) {
+    const modsInDirectory = fs.readdirSync(modDir, { withFileTypes: true })
+        .filter(x => x.isDirectory() && fs.readdirSync(path.join(modDir, x.name)).length > 0)
+        .map(x => ({ name: x.name }));
+
+    const modsInDirectoryNames = modsInDirectory.map(x => x.name);
+    const updatedModConfigData = modConfigData;
+    updatedModConfigData.mods = Object.keys(modConfigData.mods)
+        .filter(x => modsInDirectoryNames.includes(x))
+        .reduce((acc, modName) => {
+            acc[ modName ] = modConfigData.mods[ modName ];
+            return acc;
+        }, {});
+
+    return updatedModConfigData;
+}
+
+async function saveJSON(data, filePath) {
     await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2));
 }
 async function parseJSON(pathToFile, json) {
@@ -685,7 +706,7 @@ async function getGamesInLibrary(config) {
     })
 
     config.games = games;
-    await saveConfig(config, `${dataFilePath}/config.json`);
+    await saveJSON(config, `${dataFilePath}/config.json`);
 }
 async function enableModForGame(fullGamePath, mod, modName, appId, event) {
     let conflict = false;

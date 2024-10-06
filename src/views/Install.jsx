@@ -39,6 +39,7 @@ function Install() {
 	const [ enabledMods, setEnabledMods ] = useState([]);
 	const [ disabledMods, setDisabledMods ] = useState([]);
 	const [ installedMods, setInstalledMods ] = useState([]);
+	const [ refreshedModsList, setRefreshedModsList ] = useState(false);
 
 	const heightSettingRef = useRef(null);
 	const widthSettingRef = useRef(null);
@@ -146,7 +147,6 @@ function Install() {
 		if (selectedApp && selectedApp.id) {
 			window.electron.send(`get-mods-directory`, selectedApp.id)
 			window.electron.send('mod-state', selectedApp.id);
-
 			const modsDirectoryListener = (event, data) => {
 				window.electron.removeListener(`mods-${selectedApp.id}`, modsDirectoryListener);
 				if (data && data.mods) {
@@ -167,7 +167,7 @@ function Install() {
 				window.electron.removeListener(`mods-${selectedApp.id}`, modsDirectoryListener);
 			}
 		}
-	}, [ selectedApp ])
+	}, [ selectedApp, installedMods ])
 
 	/* Library */
 	useEffect(() => {
@@ -186,50 +186,22 @@ function Install() {
 		}
 	}, [ updated ]);
 
+	/* Refresh mods list per game in modal mods menu */
 	useEffect(() => {
 		if (selectedApp) {
-			window.electron.send('get-mods-in-directory', selectedApp)
-			const getModStates = (event, data) => {
+			window.electron.send('refresh-mods-in-directory', selectedApp)
+			const updateModData = (event, data) => {
 				console.log(data);
-				if (data && data.mods) {
-					const enabledMods = [];
-					const disabledMods = [];
-					Object.values(data.mods).forEach(mod => {
-						if (mod.enabled)
-							enabledMods.push(mod);
-						else disabledMods.push(mod);
-					})
-
-					setEnabledMods(enabledMods);
-					setDisabledMods(disabledMods);
-					setInstalledMods(data.mods.length);
-				}
-			}
-			window.electron.on('get-mods-in-directory', getModStates)
-			return () => { window.electron.removeAllListeners('get-mods-in-directory', getModStates) }
-		}
-	}, [ selectedApp ]);
-
-	/* Open Modal */
-	useEffect(() => {
-		const updateModData = (event, data) => {
-			const setData = async () => {
 				setInstalledMods(data.mods);
 				setEnabledMods(data.enabled);
 				setDisabledMods(data.disabled);
-			}
-			const update = async () => {
-				await setData();
-			}
-			update();
-		};
+			};
+			window.electron.on('mod-state', updateModData);
+			return () => { window.electron.removeAllListeners('mod-state', updateModData) };
+		}
+	}, [ selectedApp ]);
 
-		window.electron.on('mod-state', updateModData);
-		return () => {
-			window.electron.removeListener('mod-state', updateModData)
-		};
-	}, [ selectedApp, enabledMods, disabledMods, installedMods, modalOpen ]);
-
+	/* Apply a visual feedback that a mod is being toggled and prevent further user input until the process is done */
 	useEffect(() => {
 		const handleModStatusChange = (event, data) => {
 			if (data) {
@@ -250,6 +222,7 @@ function Install() {
 	/* Initialize Modal Structure */
 	useEffect(() => {
 		if (selectedApp) {
+			setRefreshedModsList(false);
 			const modalHeader = (
 				<>
 					<div className="modal-header-wrapper">
@@ -377,109 +350,6 @@ function Install() {
 					</div>
 				</div>
 			)
-			const modalBody = (
-				<div className="modal-body-wrapper">
-					<div className="app-mods-wrapper">
-						{Array.isArray(modsForCurrentApp) && modsForCurrentApp.length > 0 ? (
-							<>
-								<p className="mods-title">Mods available</p>
-								<ul className="mods-list">
-									{modsForCurrentApp.map(mod => {
-										const isModEnabled = enabledMods && enabledMods.find(x => x.modName === mod) ? true : false;
-										return (
-											<div className="mod-item-group" key={mod}> {/* key on outermost div */}
-												<li className="mod-item" key={mod}>{mod}</li> {/* Assuming mod is a string, not mod.modName */}
-												<ToggleButton checked={isModEnabled} onClick={() => {
-													if (!isModEnabled)
-														enableMod({ modName: mod, id: selectedApp.id })
-													else disableMod({ modName: mod, id: selectedApp.id });
-												}} />
-											</div>
-										);
-									})}
-								</ul>
-							</>
-						) : (
-							<div className="mods-text-wrapper">
-								<p className="mods-text">No mods are currently installed</p>
-								<FaFaceFrown size={20} />
-							</div>
-						)}
-
-					</div>
-					<div className="divider vertical"></div>
-					<div className="app-settings-wrapper">
-						<p className="settings-title">Global Settings</p>
-						<p className="category">Emulator</p>
-						<div className="setting-item">
-							<p>PS4 Pro Mode</p>
-							<ToggleButton onClick={() => { toggleValue(isPS4Pro, setIsPS4Pro) }} checked={isPS4Pro} />
-						</div>
-						<div className="setting-item">
-							<p>Fullscreen</p>
-							<ToggleButton onClick={() => { toggleValue(fullscreen, setFullscreen) }} checked={fullscreen} />
-						</div>
-						<div className="setting-item">
-							<p>Show Splash</p>
-							<ToggleButton onClick={() => { toggleValue(showSplash, setShowSplash) }} checked={showSplash} />
-						</div>
-						<p className="category">Graphics</p>
-						<div className="setting-item">
-							<p>Screen Width:</p>
-							<input ref={widthSettingRef} type="text" className="input setting-input" placeholder={`Current: ${screenWidth}`} onChange={e => { setScreenWidth(e.target.value) }} />
-						</div>
-						<div className="setting-item">
-							<p>Screen Height:</p>
-							<input ref={heightSettingRef} type="text" className="input setting-input" placeholder={`Current: ${screenHeight}`} onChange={e => setScreenHeight(e.target.value)} />
-						</div>
-						<div className="setting-item">
-							<p>Vblank Divider</p>
-							<input ref={vBlankDividerRef} type="number" placeholder={`Current: ${vBlankDivider}`} className="input setting-input" min={0} max={10} onChange={(e) => { setvBlankDivider(e.target.value) }} />
-						</div>
-						<p className="category">Logger</p>
-						<div className="setting-item">
-							<p>Enable Async</p>
-							<ToggleButton onClick={toggleLogType} checked={logType === "async" ? true : false} />
-						</div>
-					</div>
-					<div className="divider vertical"></div>
-					<div className="app-details-wrapper">
-						<div className="app-poster-wrapper">
-							<img src={selectedApp.icon} alt="game-icon" className="app-poster" />
-						</div>
-
-						<div className="game-details-wrapper">
-							<button className="btn bold play-btn" onClick={() => { bootGame() }}>Launch {selectedApp.title}</button>
-
-							<div className="game-detail">
-								<p className="game-title">{selectedApp.title}</p>
-							</div>
-							<div className="game-detail">
-								<p>ID:</p>
-								<p>{selectedApp.id}</p>
-							</div>
-							{Array.isArray(modsForCurrentApp) ?
-								(<div className="game-detail">
-									<p>Total mods:</p>
-									<p>{modsForCurrentApp.length}</p>
-								</div>) :
-								(<div className="game-detail">
-									<p>No mods installed</p>
-								</div>)}
-							{enabledMods && Array.isArray(modsForCurrentApp) ? (
-								<div className="game-detail">
-									<p>Enabled Mods:</p>
-									<p>{enabledMods.length}</p>
-								</div>) : null}
-							{disabledMods && Array.isArray(modsForCurrentApp) ? (
-								<div className="game-detail">
-									<p>Disabled Mods:</p>
-									<p>{disabledMods.length}</p>
-								</div>) : null}
-						</div>
-					</div>
-				</div>
-			)
 			const modalFooter = (
 				<div className="modal-footer-wrapper">
 					<button className="btn modal-close" onClick={closeModal}>OK</button>
@@ -495,8 +365,9 @@ function Install() {
 				backdrop: modalBackdrop
 			})
 		}
-	}, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods, fullscreen, showSplash, logType, isPS4Pro, vBlankDivider, modalTabView, togglingMod ])
+	}, [ selectedApp, modsForCurrentApp, enabledMods, disabledMods, fullscreen, showSplash, logType, isPS4Pro, vBlankDivider, modalTabView, togglingMod, refreshedModsList, installedMods ])
 
+	/* Filter the games by character when user is typing in the search input */
 	useEffect(() => {
 		if (searchTerm)
 			setFilteredGames(games.filter(x => x.title.toLowerCase().replace('\u2122', '').startsWith(searchTerm.toLowerCase())));
@@ -506,6 +377,7 @@ function Install() {
 		}
 	}, [ searchTerm ])
 
+	/* Fetch the current view based on the user's set view type from the config file, and update it via IPC */
 	useEffect(() => {
 		const updateView = () => {
 			if (isGrid !== null) {
