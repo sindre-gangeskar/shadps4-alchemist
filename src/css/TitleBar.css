@@ -1,60 +1,40 @@
 .title-bar-wrapper {
-    position: relative;
-    background-color: black;
-    -webkit-app-region: drag;
-    height: 40px;
-    align-content: center;
-    display: flex;
-    justify-content: space-between;
-    z-index: 2;
-    color: white;
+	position: relative;
+	background-color: black;
+	-webkit-app-region: drag;
+	height: 40px;
+	align-content: center;
+	display: flex;
+	justify-content: space-between;
+	z-index: 2;
+	color: white;
 }
-
 .title-logo-wrapper {
-    left: 0;
-    width: fit-content;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin: 10px;
+	left: 0;
+	width: fit-content;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 10px;
+	margin: 10px;
 }
-
-.title-logo-wrapper > .title-logo-icon{
-    width: 25px;
-    height: 25px;
+.title-logo-icon {
+	width: 15px;
 }
-.title-name{
-    font-weight: bolder;
-    font-size: 0.8rem;
+.title-name {
+	font-weight: thin;
+	font-size: 0.75rem;
 }
-
-.title-location {
-    height: 100%;
-    text-align: center;
-    align-items: center;
-    margin: 10px auto;
-    align-self: center;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    align-items: center;
-    align-content: center;
-    font-weight: 500;
-}
-
 .title-bar-controls {
-    display: flex;
-    width: fit-content;
-    z-index: 1;
-    -webkit-app-region: no-drag;
+	display: flex;
+	width: fit-content;
+	z-index: 1;
+	-webkit-app-region: no-drag;
 }
-
 .title-bar-controls button {
-    font-size: 1.2rem;
+	font-size: 1.2rem;
 }
-
 .title-bar-controls button:hover {
-    background-color: white;
-    color: black;
+	background-color: white;
+	color: black;
 }

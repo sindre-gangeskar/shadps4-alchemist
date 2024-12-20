@@ -1,19 +1,22 @@
 import React from "react";
 import GameCard from "./GameCard";
-
-function GamesWrapper({ content, select, isGrid }) {
+import GamesList from './GamesList';
+function GamesWrapper({ content, select, resetSearch, searchInputRef, onChange, isActive }) {
     const click = (app) => {
         select(app);
     }
 
     return (<>
-        <div className={`library-wrapper ${isGrid ? 'grid' : 'list'}`}>
-            {content.map(game => {
-                return (
-                    <GameCard key={game.title} title={game.title} id={game.id} icon={game.icon} isGrid={isGrid} onClick={() => { click(game) }}></GameCard>
-                )
-            })}
-        </div >
+        <div className="main-wrapper">
+            <GamesList content={content} resetSearch={resetSearch} searchInputRef={searchInputRef} onChange={onChange} select={select} isActive={isActive}></GamesList>
+            <div className={`library-wrapper`}>
+                {content.map(game => {
+                    return (
+                        <GameCard key={game.title} title={game.title} id={game.id} icon={game.icon} onClick={() => { click(game) }}></GameCard>
+                    )
+                })}
+            </div >
+        </div>
     </>
     )
 }

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from "react";
+import React, { useRef } from "react";
 import { useEffect, useState } from "react";
 import '../css/Install.css';
 import useGlobalStateStore from "../js/globalStateStore";
@@ -24,6 +24,7 @@ function Install() {
 	const [ isGrid, setIsGrid ] = useState(null);
 	const [ viewTypeChanged, setViewTypeChanged ] = useState(false);
 	const [ togglingMod, setTogglingMod ] = useState(null);
+	const [ activeGame, setActiveGame ] = useState(null);
 
 	/* Settings */
 	const [ fullscreen, setFullscreen ] = useGlobalStateStore(state => [ state.fullscreen, state.setFullscreen ]);
@@ -81,7 +82,6 @@ function Install() {
 	const closeModal = () => {
 		setModalOpen(false);
 	}
-
 	const setViewTab = (tab) => {
 		if (tab === 'game')
 			setModalTabView('game');
@@ -115,7 +115,6 @@ function Install() {
 	useEffect(() => {
 		const handleLibraryRefresh = (event, data) => {
 			if (data && data.games) {
-				console.log('Games data:', data);
 				setGames(data.games);
 				setFilteredGames(data.games);
 			}
@@ -509,7 +508,6 @@ function Install() {
 	useEffect(() => {
 		const updateView = () => {
 			if (isGrid !== null) {
-				console.log(viewTypeChanged)
 				window.electron.send('update-view', { isGrid: isGrid });
 			}
 		}
@@ -526,10 +524,7 @@ function Install() {
 					<button className="btn initialize" onClick={initializeLibrary}>Setup</button>
 				</div>
 				:
-				<>
-					<Search reset={resetSearch} inputRef={searchInputRef} onChange={(e) => { setSearchTerm(e.target.value) }} toggleGrid={toggleView} isGrid={isGrid} />
-					<GamesWrapper content={filteredGames} select={handleSelectedApp} isGrid={isGrid} />
-				</>
+				<GamesWrapper content={filteredGames} select={handleSelectedApp} reset={resetSearch} inputRef={searchInputRef} onChange={(e) => { setSearchTerm(e.target.value) }} />
 			}
 		</>
 	)
