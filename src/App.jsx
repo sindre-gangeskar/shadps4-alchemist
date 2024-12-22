@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom'
 
 import UpdateChecker from './partials/UpdateChecker';
-import Install from './views/Install';
+import Library from './views/Library';
 import Navbar from './partials/Navbar';
 import Create from './views/Create';
 import ProcessActive from './views/ProcessActive';
@@ -158,7 +158,6 @@ function App() {
   }, [ screenWidth, screenHeight ])
   return (
     <>
-      <VersionVisuals />
       <UpdateChecker />
       <TitleBar />
       <Navbar />
@@ -169,7 +168,7 @@ function App() {
           <Settings key={'settings'}></Settings>
         }></Route>
         <Route path='/' key={'/library'} element={
-          <Install key={'library'} />
+          <Library key={'library'} />
         }></Route>
         <Route path='/create' key={'/create'} element={
           <Create key={'create'} />

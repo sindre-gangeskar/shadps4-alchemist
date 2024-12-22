@@ -28,7 +28,7 @@
 }
 
 .toggle-btn.toggled {
-    background: linear-gradient(to right, #294592 0%, var(--tertiary-primary))
+    background: linear-gradient(to right, #294592 0%, var(--primary-color))
 }
 
 .toggle-btn.toggled .thumb {

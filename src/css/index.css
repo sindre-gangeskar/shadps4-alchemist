@@ -1,87 +1,71 @@
-@import '../css/colors.css';
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
-
+@import "../css/colors.css";
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
 :root {
-  --transparent-dark: hsla(0, 0%, 0%, 0.7);
-  --frosted-blur: blur(15px);
+	--transparent-dark: hsla(0, 0%, 0%, 0.7);
+	--frosted-blur: blur(15px);
 }
 
-
-@font-face{
-  font-family: 'JetBrains Mono';
-  src: url('../assets/fonts/JetBrainsMono[wght].ttf');
-  font-weight: normal;
-  font-style: normal;
+@font-face {
+	font-family: "JetBrains Mono";
+	src: url("../assets/fonts/JetBrainsMono[wght].ttf");
+	font-weight: normal;
+	font-style: normal;
 }
 
 *,
 *::after,
 *::before {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  user-select: none;
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	user-select: none;
 }
 
 body {
-  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-    background: radial-gradient(circle at bottom center, var(--secondary-color) 0%, var(--primary-color) 100%);
-/*   background-color: rgb(0, 0, 0); */
-  background-size: 100% 100%;
-  color: white;
-  height: 100vh;
-  overflow: hidden;
+	font-family: "Quicksand", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+  background-color: var(--third-color);
+	color: white;
+	overflow: hidden;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+	font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
 button {
-  outline: none;
-  border: none;
+	outline: none;
+	border: none;
 }
 
 .btn {
-  padding: 12px;
-  background: transparent;
-  color: white;
-  border-radius: 0.3rem;
-  cursor: pointer;
-  transition: 125ms ease;
+	padding: 12px;
+	background: transparent;
+	color: white;
+	border-radius: 0.3rem;
+	cursor: pointer;
+	transition: 125ms ease;
 }
 
 .title {
-  margin-bottom: 50px;
-  color: black;
-  font-size: 1.5rem;
-  position: relative;
-  z-index: 0;
-  background-color: white;
-  width: 100%;
-  text-align: center;
-  z-index: 5;
-  padding: 15px;
+	margin-bottom: 50px;
+	color: black;
+	font-size: 1.5rem;
+	position: relative;
+	z-index: 0;
+	background-color: white;
+	width: 100%;
+	text-align: center;
+	z-index: 5;
+	padding: 15px;
 }
-
-.show {
-  opacity: 1;
+::-webkit-scrollbar{
+	width: 6px;
+	background-color: var(--third-color);
 }
-
-.hide {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.hide.blurred{
-  backdrop-filter: blur(0px);
-}
-
-.show.blurred{
-  backdrop-filter: var(--frosted-blur);
+::-webkit-scrollbar-thumb{
+	background-color: var(--secondary-color);
+	border-radius: 1.2rem;
 }

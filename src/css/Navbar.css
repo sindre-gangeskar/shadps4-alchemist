@@ -42,7 +42,7 @@
 	position: relative;
 	left: 0;
 	bottom: 0;
-	background-color: var(--secondary-color);
+	background-color: var(--primary-color);
 	transition: 250ms ease;
     margin-top: 5px;
 
@@ -53,7 +53,7 @@
 }
 
 .navbar-link:hover {
-	color: var(--secondary-color);
+	color: var(--primary-color);
 }
 
 .navbar-wrapper.collapsed .navbar-link {

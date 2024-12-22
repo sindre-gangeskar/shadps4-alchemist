@@ -1,62 +1,48 @@
 .dialog-wrapper {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center;
-    align-self: center;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	text-align: center;
+	align-self: center;
 }
 
-.library-wrapper {
-    position: relative;
-    display: grid;
-    gap: 10px;
-    grid-template-columns: repeat(auto-fit, minmax(200px, max-content));
-    overflow-y: scroll;
-    width: 100vw;
-    height: auto;
-    max-height: 80vh;
-    justify-content: space-around;
-    padding-bottom: 150px;
-    padding-left: 15px;
-    padding-right: 15px;
-}
-
-.library-wrapper:has(.card-wrapper) {
-    justify-content:center
-}
-
-.library-wrapper.list {
-    position: relative;
-    display: flex;
-    flex-direction: column;
+.games-wrapper {
+	position: relative;
+    left: 0;
     width: 100%;
-    gap: 0px;
-    height: 80vh;
-    overflow-y: scroll;
-    justify-content: start;
+	display: grid;
+	gap: 10px;
+	grid-template-columns: repeat(auto-fit, minmax(200px, max-content));
+	overflow-y: scroll;
+	justify-content: space-around;
+	align-content: center;
 }
 
-.library-wrapper::-webkit-scrollbar {
-    width: 10px;
+.games-wrapper:has(.card-wrapper) {
+	justify-content: center;
 }
 
-.library-wrapper::-webkit-scrollbar-button {
-    height: 50px;
+.games-wrapper::-webkit-scrollbar {
+	width: 10px;
 }
 
-.library-wrapper::-webkit-scrollbar-thumb {
-    background-color: var(--secondary-color);
-    border-radius: 0.5rem;
+.games-wrapper::-webkit-scrollbar-button {
+	height: 50px;
+}
+
+.games-wrapper::-webkit-scrollbar-thumb {
+	background-color: var(--secondary-color);
+	border-radius: 0.5rem;
 }
 
 .btn.initialize {
-    background-color: white;
-    color: black;
-    font-size: 1.2rem;
-    margin: 50px;
+	background-color: white;
+	color: black;
+	font-size: 1.2rem;
+	margin: 50px;
 }
 
 .btn.initialize:hover {
-    transform: scale(104%);
+	transform: scale(104%);
 }

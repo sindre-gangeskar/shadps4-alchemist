@@ -9,12 +9,10 @@
     overflow-y: auto;
     gap: 25px;
     margin: auto;
-    background-color: var(--primary-color)
 }
 
 .setting-title{
     margin: 10px auto;
-    border-bottom: 1px solid var(--secondary-color);
     width: 100%;
     text-align: center;
     padding: 10px;
@@ -24,7 +22,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--primary-color);
     padding: 25px;
     border-radius: 0.5rem;
 }

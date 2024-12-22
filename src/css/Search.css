@@ -26,7 +26,7 @@
 	outline: none;
   height: 30px;
   padding: 0px 5px;
-  margin: auto 10px;
+	position: relative;
 }
 
 .search-input::placeholder {
@@ -46,16 +46,10 @@
 .search-input-group {
   width: 100%;
   align-items: center;
-	display: grid;
-	grid-auto-flow: column;
+	display: flex;
+	padding: 5px;
 }
 
 .search-wrapper {
-	width: 100%;
-	display: flex;
-	flex-direction: row;
 	align-items: center;
-	justify-content: center;
-  padding: 0;
-  margin: 0;
 }
